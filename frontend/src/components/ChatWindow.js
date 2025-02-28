@@ -11,8 +11,8 @@ import {
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
 import MessageBubble from './MessageBubble';
+import axios from 'axios';
 
 function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
@@ -36,11 +36,17 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       }
     };
   }, [conversationId, user]);
-
+  const getOtherParticipant = (conversation, currentUser) => {
+    if (!conversation || !conversation.participants || !currentUser) {
+      return null;
+    }
+    return conversation.participants.find(p => p && p.id !== currentUser.id) || null;
+  };
+  const otherUser = conversation && conversation.participants && user ? 
+    conversation.participants.find(p => p && p.id !== user.id) || null : null;
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
   const fetchMessages = async () => {
     try {
       const response = await axios.get(`http://localhost:8000/api/messages/?conversation_id=${conversationId}`);
@@ -51,7 +57,6 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       setLoading(false);
     }
   };
-
   const markMessagesAsRead = async () => {
     try {
       await axios.post('http://localhost:8000/api/messages/mark_as_read/', {
@@ -112,7 +117,6 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     
     setSocket(newSocket);
   };
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -126,14 +130,16 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       });
       
       // Also send via WebSocket for real-time delivery
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        const otherUser = conversation.participants.find(p => p.id !== user.id);
-        socket.send(JSON.stringify({
-          type: 'chat_message',
-          message: newMessage,
-          conversation_id: parseInt(conversationId),
-          recipient_id: otherUser.id
-        }));
+      if (socket && socket.readyState === WebSocket.OPEN && conversation && conversation.participants) {
+        const otherUser = conversation.participants.find(p => p && p.id !== user?.id);
+        if (otherUser) {
+          socket.send(JSON.stringify({
+            type: 'chat_message',
+            message: newMessage,
+            conversation_id: parseInt(conversationId),
+            recipient_id: otherUser.id
+          }));
+        }
       }
       
       setNewMessage('');
@@ -146,7 +152,6 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       console.error('Error sending message:', error);
     }
   };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -157,16 +162,21 @@ if (!conversation) {
       </Box>
     );
   }
-
-  const otherUser = conversation.participants.find(p => p.id !== user.id);
-
+  // Safely get the other user with null checks
+  const getOtherUser = () => {
+    if (!conversation || !conversation.participants || !user) {
+      return null;
+    }
+    return conversation.participants.find(p => p && p.id !== user.id) || null;
+  };
+   otherUser = getOtherUser();
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <Avatar sx={{ mr: 2 }}>
-          {otherUser?.username.charAt(0).toUpperCase()}
+          {otherUser?.username?.charAt(0).toUpperCase() || '?'}
         </Avatar>
-        <Typography variant="h6">{otherUser?.username}</Typography>
+        <Typography variant="h6">{otherUser?.username || 'Unknown User'}</Typography>
       </Box>
       
       <Paper 
@@ -195,7 +205,7 @@ if (!conversation) {
             <MessageBubble 
               key={message.id} 
               message={message} 
-              isOwnMessage={message.sender.id === user.id}
+              isOwnMessage={message.sender && user ? message.sender.id === user.id : false}
             />
           ))
         )}

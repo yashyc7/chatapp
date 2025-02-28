@@ -20,7 +20,10 @@ function ConversationList({ conversations, onSelect, selectedConversation }) {
   const { user } = useContext(AuthContext);
 
   const getOtherParticipant = (conversation) => {
-    return conversation.participants.find(p => p.id !== user.id) || {};
+    if (!conversation || !conversation.participants || !user) {
+      return {};
+    }
+    return conversation.participants.find(p => p && p.id !== user.id) || {};
   };
 
   const formatTime = (timestamp) => {
@@ -29,111 +32,107 @@ function ConversationList({ conversations, onSelect, selectedConversation }) {
   };
 
   return (
-    <>
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">Conversations</Typography>
+    <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
+      <ListItem component={Link} to="/chat/users" button sx={{ textDecoration: 'none', color: 'inherit' }}>
         <Button 
-          component={Link} 
-          to="/chat/users" 
+          fullWidth 
+          variant="outlined" 
           startIcon={<AddIcon />}
-          size="small"
-          variant="outlined"
+          sx={{ borderRadius: 2, py: 1 }}
         >
-          New Chat
+          New Conversation
         </Button>
-      </Box>
+      </ListItem>
       <Divider />
-      <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-        {conversations.length === 0 ? (
-          <ListItem>
-            <ListItemText 
-              primary="No conversations yet" 
-              secondary="Start a new chat to begin messaging"
-            />
-          </ListItem>
-        ) : (
-          conversations.map((conversation) => {
-            const otherUser = getOtherParticipant(conversation);
-            const lastMessage = conversation.last_message;
-            const isSelected = selectedConversation && selectedConversation.id === conversation.id;
-            const hasUnread = lastMessage && !lastMessage.is_read && lastMessage.sender.id !== user.id;
-            
-            return (
-              <React.Fragment key={conversation.id}>
-                <ListItem 
-                  alignItems="flex-start"
-                  button
-                  selected={isSelected}
-                  onClick={() => onSelect(conversation)}
-                  sx={{
-                    backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                    },
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Badge color="primary" variant="dot" invisible={!hasUnread}>
-                      <Avatar>
-                        {otherUser.username ? otherUser.username.charAt(0).toUpperCase() : <PersonIcon />}
-                      </Avatar>
-                    </Badge>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
+      
+      {conversations && conversations.length > 0 ? (
+        conversations.map((conversation) => {
+          if (!conversation) return null;
+          
+          const otherUser = getOtherParticipant(conversation);
+          const lastMessage = conversation.last_message;
+          const hasUnread = conversation.unread_count > 0;
+          const isSelected = selectedConversation && selectedConversation.id === conversation.id;
+          
+          return (
+            <React.Fragment key={conversation.id}>
+              <ListItem 
+                alignItems="flex-start"
+                button
+                selected={isSelected}
+                onClick={() => onSelect(conversation)}
+                sx={{
+                  backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                  },
+                }}
+              >
+                <ListItemAvatar>
+                  <Badge color="primary" variant="dot" invisible={!hasUnread}>
+                    <Avatar>
+                      {otherUser.username ? otherUser.username.charAt(0).toUpperCase() : <PersonIcon />}
+                    </Avatar>
+                  </Badge>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography
+                      component="span"
+                      variant="body1"
+                      fontWeight={hasUnread ? 'bold' : 'normal'}
+                    >
+                      {otherUser.username || 'Unknown User'}
+                    </Typography>
+                  }
+                  secondary={
+                    <>
                       <Typography
                         component="span"
-                        variant="body1"
-                        fontWeight={hasUnread ? 'bold' : 'normal'}
+                        variant="body2"
+                        color="text.primary"
+                        sx={{ 
+                          display: 'inline',
+                          fontWeight: hasUnread ? 'bold' : 'normal',
+                          maxWidth: '70%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
                       >
-                        {otherUser.username || 'Unknown User'}
+                        {lastMessage ? (
+                          lastMessage.sender && lastMessage.sender.id === user?.id ? 'You: ' : ''
+                        ) : ''}
+                        {lastMessage ? lastMessage.content : 'No messages yet'}
                       </Typography>
-                    }
-                    secondary={
-                      <>
+                      {lastMessage && (
                         <Typography
                           component="span"
-                          variant="body2"
-                          color="text.primary"
+                          variant="caption"
+                          color="text.secondary"
                           sx={{ 
-                            display: 'inline',
-                            fontWeight: hasUnread ? 'bold' : 'normal',
-                            maxWidth: '70%',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
+                            display: 'block',
+                            textAlign: 'right',
+                            mt: 0.5
                           }}
                         >
-                          {lastMessage ? (
-                            lastMessage.sender.id === user.id ? 'You: ' : ''
-                          ) : ''}
-                          {lastMessage ? lastMessage.content : 'No messages yet'}
+                          {formatTime(lastMessage.timestamp)}
                         </Typography>
-                        {lastMessage && (
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ 
-                              display: 'block',
-                              textAlign: 'right',
-                              mt: 0.5
-                            }}
-                          >
-                            {formatTime(lastMessage.timestamp)}
-                          </Typography>
-                        )}
-                      </>
-                    }
-                  />
-                </ListItem>
-                <Divider variant="inset" component="li" />
-              </React.Fragment>
-            );
-          })
-        )}
-      </List>
-    </>
+                      )}
+                    </>
+                  }
+                />
+              </ListItem>
+              <Divider variant="inset" component="li" />
+            </React.Fragment>
+          );
+        })
+      ) : (
+        <ListItem>
+          <ListItemText primary="No conversations yet" />
+        </ListItem>
+      )}
+    </List>
   );
 }
 
