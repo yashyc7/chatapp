@@ -8,26 +8,27 @@ import {
   Button, 
   Paper, 
   Alert,
-  InputAdornment,
-  IconButton
+  CircularProgress
 } from '@mui/material';
-import { Visibility, VisibilityOff, Chat as ChatIcon } from '@mui/icons-material';
+import { Chat as ChatIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
     if (!username || !password) {
-      setError('Please enter both username and password');
+      setError('Please fill in all fields');
+      setLoading(false);
       return;
     }
     
@@ -36,29 +37,32 @@ function Login() {
       navigate('/chat');
     } else {
       setError('Invalid username or password');
+      setLoading(false);
     }
   };
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ 
-        mt: 8, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center' 
-      }}>
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      padding: 2
+    }}>
+      <Container maxWidth="xs">
         <Paper 
           elevation={3} 
           sx={{ 
             p: 4, 
-            width: '100%', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             borderRadius: 4,
-            background: 'rgba(255, 255, 255, 0.8)',
+            background: 'rgba(255, 255, 255, 0.7)',
             backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
               boxShadow: '0 16px 70px -12.125px rgba(0,0,0,0.3)'
@@ -68,7 +72,6 @@ function Login() {
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
-            justifyContent: 'center', 
             mb: 3 
           }}>
             <ChatIcon 
@@ -92,14 +95,9 @@ function Login() {
             </Typography>
           </Box>
           
-          {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+          {error && <Alert severity="error" sx={{ mb: 2, width: '100%', borderRadius: 2 }}>{error}</Alert>}
           
-          <Box 
-            component="form" 
-            onSubmit={handleSubmit} 
-            noValidate 
-            sx={{ mt: 1 }}
-          >
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
               required
@@ -111,11 +109,19 @@ function Login() {
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
               sx={{ 
-                borderRadius: 2,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                  backdropFilter: 'blur(5px)',
                   transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  }
                 }
               }}
             />
@@ -125,49 +131,51 @@ function Login() {
               fullWidth
               name="password"
               label="Password"
-              type={showPassword ? 'text' : 'password'}
+              type="password"
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
               sx={{ 
-                borderRadius: 2,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                  backdropFilter: 'blur(5px)',
                   transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  }
                 }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                )
               }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              disabled={loading}
               sx={{ 
                 mt: 3, 
                 mb: 2,
                 py: 1.5,
+                borderRadius: 2,
                 background: 'linear-gradient(45deg, #1976d2 30%, #03a9f4 90%)',
                 transition: 'all 0.3s ease-in-out',
+                position: 'relative',
                 '&:hover': {
                   transform: 'translateY(-2px)',
                   boxShadow: '0 8px 20px rgba(3, 169, 244, 0.4)'
                 }
               }}
             >
-              Sign In
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Sign In'
+              )}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Link to="/register" style={{ textDecoration: 'none' }}>
@@ -187,8 +195,8 @@ function Login() {
             </Box>
           </Box>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 
