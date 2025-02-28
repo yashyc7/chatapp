@@ -1,7 +1,22 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Box, Drawer, AppBar, Toolbar, Typography, Divider, List, IconButton, Avatar } from '@mui/material';
-import { Menu as MenuIcon, ExitToApp as LogoutIcon } from '@mui/icons-material';
+import { 
+  Box, 
+  Drawer, 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Divider, 
+  IconButton, 
+  Avatar,
+  Fade,
+  useTheme
+} from '@mui/material';
+import { 
+  Menu as MenuIcon, 
+  ExitToApp as LogoutIcon,
+  MarkChatRead as MarkChatReadIcon
+} from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
@@ -18,84 +33,110 @@ function ChatLayout() {
   const [loading, setLoading] = useState(true);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const theme = useTheme();
 
   useEffect(() => {
-    if (user) {  // Only fetch conversations if user exists
+    if (user) {
       fetchConversations();
     }
-  }, [user]);  // Add user to the dependency array
+  }, [user]);
+
   const fetchConversations = async () => {
     try {
-      // Log the current authorization header for debugging
-      console.log('Auth header:', axios.defaults.headers.common['Authorization']);
-      
       const response = await axios.get(API_URLS.conversations);
       setConversations(response.data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching conversations:', error);
       
-      // Check if it's an authentication error and redirect to login if needed
       if (error.response && error.response.status === 401) {
         console.log('Authentication error, redirecting to login');
-        logout();  // Call the logout function from AuthContext
+        logout();
         navigate('/login');
       }
       
       setLoading(false);
     }
   };
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
   const handleConversationSelect = (conversation) => {
     setSelectedConversation(conversation);
     navigate(`/chat/conversation/${conversation.id}`);
   };
+
   const handleStartNewConversation = async (userId) => {
     try {
       const response = await axios.post(API_URLS.startConversation, {
         user_id: userId
       });
       
-      // Add the new conversation to the list if it's not already there
       if (!conversations.find(conv => conv.id === response.data.id)) {
         setConversations([...conversations, response.data]);
       }
       
-      // Select the conversation
       setSelectedConversation(response.data);
       navigate(`/chat/conversation/${response.data.id}`);
     } catch (error) {
       console.error('Error starting conversation:', error);
     }
   };
+
   const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Chat App
+    <Box sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      background: 'rgba(255, 255, 255, 0.8)',
+    }}>
+      <Toolbar sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+        color: 'white',
+        borderRadius: '0 0 16px 16px',
+        mb: 1
+      }}>
+        <MarkChatReadIcon sx={{ mr: 1, fontSize: 28 }} />
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+          ChatterBox
         </Typography>
       </Toolbar>
       <Divider />
-      <ConversationList 
-        conversations={conversations} 
-        onSelect={handleConversationSelect}
-        selectedConversation={selectedConversation}
-      />
-    </div>
+      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <ConversationList 
+          conversations={conversations} 
+          onSelect={handleConversationSelect}
+          selectedConversation={selectedConversation}
+        />
+      </Box>
+    </Box>
   );
+
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ 
+      display: 'flex',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      minHeight: '100vh'
+    }}>
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          background: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          color: 'text.primary',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
         }}
       >
         <Toolbar>
@@ -117,10 +158,23 @@ function ChatLayout() {
             <Typography variant="body1" sx={{ mr: 2 }}>
               {user?.username}
             </Typography>
-            <Avatar sx={{ mr: 2 }}>
+            <Avatar sx={{ 
+              mr: 2,
+              background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+            }}>
               {user?.username.charAt(0).toUpperCase()}
             </Avatar>
-            <IconButton color="inherit" onClick={handleLogout}>
+            <IconButton 
+              color="primary" 
+              onClick={handleLogout}
+              sx={{
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  color: theme.palette.error.main,
+                  transform: 'rotate(90deg)'
+                }
+              }}
+            >
               <LogoutIcon />
             </IconButton>
           </Box>
@@ -135,11 +189,15 @@ function ChatLayout() {
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              borderRadius: '0 16px 16px 0',
+            },
           }}
         >
           {drawer}
@@ -148,7 +206,13 @@ function ChatLayout() {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              borderRadius: '0 16px 16px 0',
+              border: 'none',
+              background: 'transparent',
+            },
           }}
           open
         >
@@ -157,19 +221,42 @@ function ChatLayout() {
       </Box>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+        sx={{ 
+          flexGrow: 1, 
+          p: 3, 
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          transition: 'all 0.3s ease-in-out',
+        }}
       >
         <Toolbar />
-        <Routes>
-          <Route path="/" element={<Typography>Select a conversation or start a new one</Typography>} />
-          <Route path="/users" element={<UserList onStartConversation={handleStartNewConversation} />} />
-          <Route path="/conversation/:id" element={
-            <ChatWindow 
-              conversation={selectedConversation} 
-              onConversationUpdate={fetchConversations}
-            />
-          } />
-        </Routes>
+        <Fade in={true} timeout={800}>
+          <Box>
+            <Routes>
+              <Route path="/" element={
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  height: '70vh',
+                  flexDirection: 'column',
+                  gap: 2
+                }}>
+                  <MarkChatReadIcon sx={{ fontSize: 80, color: 'primary.main', opacity: 0.7 }} />
+                  <Typography variant="h5" color="textSecondary">
+                    Select a conversation or start a new one
+                  </Typography>
+                </Box>
+              } />
+              <Route path="/users" element={<UserList onStartConversation={handleStartNewConversation} />} />
+              <Route path="/conversation/:id" element={
+                <ChatWindow 
+                  conversation={selectedConversation} 
+                  onConversationUpdate={fetchConversations}
+                />
+              } />
+            </Routes>
+          </Box>
+        </Fade>
       </Box>
     </Box>
   );
