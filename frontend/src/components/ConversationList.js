@@ -33,7 +33,11 @@ function ConversationList({ conversations, onSelect, selectedConversation }) {
 
   return (
     <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
-      <ListItem component={Link} to="/chat/users" button sx={{ textDecoration: 'none', color: 'inherit' }}>
+      <ListItem 
+        component={Link}
+        to="/chat/users"
+        sx={{ textDecoration: 'none', color: 'inherit' }}
+      >
         <Button 
           fullWidth 
           variant="outlined" 

@@ -42,6 +42,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     }
     return conversation.participants.find(p => p && p.id !== currentUser.id) || null;
   };
+  // Remove this duplicate declaration since it's already defined
   const otherUser = conversation && conversation.participants && user ? 
     conversation.participants.find(p => p && p.id !== user.id) || null : null;
   useEffect(() => {
@@ -169,15 +170,19 @@ if (!conversation) {
     }
     return conversation.participants.find(p => p && p.id !== user.id) || null;
   };
-   otherUser = getOtherUser();
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Avatar sx={{ mr: 2 }}>
-          {otherUser?.username?.charAt(0).toUpperCase() || '?'}
-        </Avatar>
-        <Typography variant="h6">{otherUser?.username || 'Unknown User'}</Typography>
-      </Box>
+ // Remove this line as it's causing a redeclaration error
+ // otherUser = getOtherUser();
+ // Instead, use the getOtherUser function directly
+ const otherParticipant = getOtherUser();
+ 
+ return (
+   <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+       <Avatar sx={{ mr: 2 }}>
+         {otherParticipant?.username?.charAt(0).toUpperCase() || '?'}
+       </Avatar>
+       <Typography variant="h6">{otherParticipant?.username || 'Unknown User'}</Typography>
+     </Box>
       
       <Paper 
         elevation={3} 
