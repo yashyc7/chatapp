@@ -150,8 +150,8 @@ function ChatLayout() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {selectedConversation ? 
-              selectedConversation.participants.find(p => p.id !== user.id)?.username || 'Chat' 
+            {selectedConversation && selectedConversation.participants && user ? 
+              selectedConversation.participants.find(p => p && p.id !== user.id)?.username || 'Chat' 
               : 'Select a conversation'}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
