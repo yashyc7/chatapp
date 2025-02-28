@@ -10,7 +10,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { Chat as ChatIcon } from '@mui/icons-material';
+import { MarkChatRead as ChatIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 
 function Login() {
