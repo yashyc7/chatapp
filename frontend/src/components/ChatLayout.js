@@ -18,9 +18,10 @@ import {
   MarkChatRead as MarkChatReadIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
-import ConversationList from './conversationlist';
-import ChatWindow from './chatwindow';
-import UserList from './userlist';
+// Update these import statements to match the exact filename case on disk
+import ConversationList from './ConversationList';
+import ChatWindow from './ChatWindow';
+import UserList from './UserList';
 import axios from 'axios';
 import { API_URLS } from '../config';
 
