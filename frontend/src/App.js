@@ -12,11 +12,14 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/chat/*" element={
-            <PrivateRoute>
-              <ChatLayout />
-            </PrivateRoute>
-          } />
+          <Route
+            path="/chat/*"
+            element={
+              <PrivateRoute>
+                <ChatLayout />
+              </PrivateRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
@@ -27,11 +30,11 @@ function App() {
 // Private route component
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
-  
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 }
 

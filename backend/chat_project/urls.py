@@ -21,10 +21,10 @@ from rest_framework.authtoken.views import obtain_auth_token
 from chat import auth  # Make sure this import works
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('chat.urls')),
-    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
+    path("admin/", admin.site.urls),
+    path("api/", include("chat.urls")),
+    path("api-token-auth/", obtain_auth_token, name="api_token_auth"),
     # Make sure these auth endpoints are available
-    path('api/login/', auth.login_user, name='login'),
-    path('api/register/', auth.register_user, name='register'),
+    path("api/login/", auth.login_user, name="login"),
+    path("api/register/", auth.register_user, name="register"),
 ]

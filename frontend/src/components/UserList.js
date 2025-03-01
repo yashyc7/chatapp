@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { 
-  List, 
-  ListItem, 
-  ListItemAvatar, 
-  ListItemText, 
-  Avatar, 
-  Typography, 
+import {
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Avatar,
+  Typography,
   Divider,
   Paper,
   Box,
   TextField,
   InputAdornment,
   IconButton,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
 import { Search as SearchIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
@@ -32,10 +32,11 @@ function UserList({ onStartConversation }) {
 
   useEffect(() => {
     if (searchQuery) {
-      const filtered = users.filter(u => 
-        u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (u.first_name && u.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (u.last_name && u.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      const filtered = users.filter(
+        u =>
+          u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (u.first_name && u.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (u.last_name && u.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredUsers(filtered);
     } else {
@@ -57,21 +58,19 @@ function UserList({ onStartConversation }) {
     }
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = e => {
     setSearchQuery(e.target.value);
   };
 
   return (
     <Paper elevation={3} sx={{ height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
-        <IconButton 
-          component={Link} 
-          to="/chat" 
-          sx={{ mr: 1 }}
-        >
+        <IconButton component={Link} to="/chat" sx={{ mr: 1 }}>
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>New Chat</Typography>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          New Chat
+        </Typography>
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>
@@ -98,34 +97,30 @@ function UserList({ onStartConversation }) {
         <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
           {filteredUsers.length === 0 ? (
             <ListItem>
-              <ListItemText 
-                primary="No users found" 
-                secondary={searchQuery ? "Try a different search term" : "No other users are registered"}
+              <ListItemText
+                primary="No users found"
+                secondary={
+                  searchQuery ? 'Try a different search term' : 'No other users are registered'
+                }
               />
             </ListItem>
           ) : (
-            filteredUsers.map((user) => (
+            filteredUsers.map(user => (
               <React.Fragment key={user.id}>
-                <ListItem 
+                <ListItem
                   alignItems="flex-start"
                   button
                   onClick={() => onStartConversation(user.id)}
                 >
                   <ListItemAvatar>
-                    <Avatar>
-                      {user.username.charAt(0).toUpperCase()}
-                    </Avatar>
+                    <Avatar>{user.username.charAt(0).toUpperCase()}</Avatar>
                   </ListItemAvatar>
                   <ListItemText
                     primary={user.username}
                     secondary={
                       <>
                         {user.first_name && user.last_name ? (
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.primary"
-                          >
+                          <Typography component="span" variant="body2" color="text.primary">
                             {`${user.first_name} ${user.last_name}`}
                           </Typography>
                         ) : null}

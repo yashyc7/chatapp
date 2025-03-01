@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
+
     if (token && userData) {
       setUser(JSON.parse(userData));
       // Set the default Authorization header for all axios requests
@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
       delete axios.defaults.headers.common['Authorization'];
       console.log('No token found, Authorization header cleared');
     }
-    
+
     setLoading(false);
   }, []);
 
@@ -32,14 +32,14 @@ export const AuthProvider = ({ children }) => {
       // with:
       const response = await axios.post(API_URLS.login, { username, password });
       const { token, user_id, username: uname, email } = response.data;
-      
+
       const userData = { id: user_id, username: uname, email };
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
-      
+
       setUser(userData);
       return true;
     } catch (error) {
@@ -48,19 +48,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
+  const register = async userData => {
     try {
       console.log('Sending registration data:', userData);
       const response = await axios.post(API_URLS.register, userData);
       const { token, user_id, username, email } = response.data;
-      
+
       const user = { id: user_id, username, email };
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      
+
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
-      
+
       setUser(user);
       return true;
     } catch (error) {

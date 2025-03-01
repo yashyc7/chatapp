@@ -1,6 +1,7 @@
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '' // Your production API URL
-  : 'http://localhost:8000';
+const API_BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? '' // Your production API URL
+    : 'http://localhost:8000';
 
 export const API_URLS = {
   login: `${API_BASE_URL}/api/login/`,

@@ -14,17 +14,15 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 
 # Set the Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chat_project.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "chat_project.settings")
 django.setup()
 
 # Import routing after Django is set up
 import chat.routing
 
-application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(
-            chat.routing.websocket_urlpatterns
-        )
-    ),
-})
+application = ProtocolTypeRouter(
+    {
+        "http": get_asgi_application(),
+        "websocket": AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)),
+    }
+)

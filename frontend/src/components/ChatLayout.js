@@ -1,26 +1,26 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Drawer, 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  Divider, 
-  IconButton, 
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  Typography,
+  Divider,
+  IconButton,
   Avatar,
   Fade,
-  useTheme
+  useTheme,
 } from '@mui/material';
-import { 
-  Menu as MenuIcon, 
+import {
+  Menu as MenuIcon,
   ExitToApp as LogoutIcon,
-  MarkChatRead as MarkChatReadIcon
+  MarkChatRead as MarkChatReadIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
-import ConversationList from './ConversationList';
-import ChatWindow from './ChatWindow';
-import UserList from './UserList';
+import ConversationList from './conversationlist';
+import ChatWindow from './chatwindow';
+import UserList from './userlist';
 import axios from 'axios';
 import { API_URLS } from '../config';
 
@@ -48,13 +48,13 @@ function ChatLayout() {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      
+
       if (error.response && error.response.status === 401) {
         console.log('Authentication error, redirecting to login');
         logout();
         navigate('/login');
       }
-      
+
       setLoading(false);
     }
   };
@@ -68,21 +68,21 @@ function ChatLayout() {
     navigate('/login');
   };
 
-  const handleConversationSelect = (conversation) => {
+  const handleConversationSelect = conversation => {
     setSelectedConversation(conversation);
     navigate(`/chat/conversation/${conversation.id}`);
   };
 
-  const handleStartNewConversation = async (userId) => {
+  const handleStartNewConversation = async userId => {
     try {
       const response = await axios.post(API_URLS.startConversation, {
-        user_id: userId
+        user_id: userId,
       });
-      
+
       if (!conversations.find(conv => conv.id === response.data.id)) {
         setConversations([...conversations, response.data]);
       }
-      
+
       setSelectedConversation(response.data);
       navigate(`/chat/conversation/${response.data.id}`);
     } catch (error) {
@@ -91,21 +91,25 @@ function ChatLayout() {
   };
 
   const drawer = (
-    <Box sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      background: 'rgba(255, 255, 255, 0.8)',
-    }}>
-      <Toolbar sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
-        color: 'white',
-        borderRadius: '0 0 16px 16px',
-        mb: 1
-      }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'rgba(255, 255, 255, 0.8)',
+      }}
+    >
+      <Toolbar
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+          color: 'white',
+          borderRadius: '0 0 16px 16px',
+          mb: 1,
+        }}
+      >
         <MarkChatReadIcon sx={{ mr: 1, fontSize: 28 }} />
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
           ChatterBox
@@ -113,8 +117,8 @@ function ChatLayout() {
       </Toolbar>
       <Divider />
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-        <ConversationList 
-          conversations={conversations} 
+        <ConversationList
+          conversations={conversations}
           onSelect={handleConversationSelect}
           selectedConversation={selectedConversation}
         />
@@ -123,11 +127,13 @@ function ChatLayout() {
   );
 
   return (
-    <Box sx={{ 
-      display: 'flex',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: '100vh'
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        minHeight: '100vh',
+      }}
+    >
       <AppBar
         position="fixed"
         sx={{
@@ -150,29 +156,32 @@ function ChatLayout() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {selectedConversation && selectedConversation.participants && user ? 
-              selectedConversation.participants.find(p => p && p.id !== user.id)?.username || 'Chat' 
+            {selectedConversation && selectedConversation.participants && user
+              ? selectedConversation.participants.find(p => p && p.id !== user.id)?.username ||
+                'Chat'
               : 'Select a conversation'}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography variant="body1" sx={{ mr: 2 }}>
               {user?.username}
             </Typography>
-            <Avatar sx={{ 
-              mr: 2,
-              background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
-            }}>
+            <Avatar
+              sx={{
+                mr: 2,
+                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+              }}
+            >
               {user?.username.charAt(0).toUpperCase()}
             </Avatar>
-            <IconButton 
-              color="primary" 
+            <IconButton
+              color="primary"
               onClick={handleLogout}
               sx={{
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   color: theme.palette.error.main,
-                  transform: 'rotate(90deg)'
-                }
+                  transform: 'rotate(90deg)',
+                },
               }}
             >
               <LogoutIcon />
@@ -180,10 +189,7 @@ function ChatLayout() {
           </Box>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
+      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -193,8 +199,8 @@ function ChatLayout() {
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
               width: drawerWidth,
               borderRadius: '0 16px 16px 0',
             },
@@ -206,8 +212,8 @@ function ChatLayout() {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
               width: drawerWidth,
               borderRadius: '0 16px 16px 0',
               border: 'none',
@@ -221,9 +227,9 @@ function ChatLayout() {
       </Box>
       <Box
         component="main"
-        sx={{ 
-          flexGrow: 1, 
-          p: 3, 
+        sx={{
+          flexGrow: 1,
+          p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           transition: 'all 0.3s ease-in-out',
         }}
@@ -232,28 +238,39 @@ function ChatLayout() {
         <Fade in={true} timeout={800}>
           <Box>
             <Routes>
-              <Route path="/" element={
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center', 
-                  height: '70vh',
-                  flexDirection: 'column',
-                  gap: 2
-                }}>
-                  <MarkChatReadIcon sx={{ fontSize: 80, color: 'primary.main', opacity: 0.7 }} />
-                  <Typography variant="h5" color="textSecondary">
-                    Select a conversation or start a new one
-                  </Typography>
-                </Box>
-              } />
-              <Route path="/users" element={<UserList onStartConversation={handleStartNewConversation} />} />
-              <Route path="/conversation/:id" element={
-                <ChatWindow 
-                  conversation={selectedConversation} 
-                  onConversationUpdate={fetchConversations}
-                />
-              } />
+              <Route
+                path="/"
+                element={
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '70vh',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    <MarkChatReadIcon sx={{ fontSize: 80, color: 'primary.main', opacity: 0.7 }} />
+                    <Typography variant="h5" color="textSecondary">
+                      Select a conversation or start a new one
+                    </Typography>
+                  </Box>
+                }
+              />
+              <Route
+                path="/users"
+                element={<UserList onStartConversation={handleStartNewConversation} />}
+              />
+              <Route
+                path="/conversation/:id"
+                element={
+                  <ChatWindow
+                    conversation={selectedConversation}
+                    onConversationUpdate={fetchConversations}
+                  />
+                }
+              />
             </Routes>
           </Box>
         </Fade>
