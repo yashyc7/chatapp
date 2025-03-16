@@ -1,18 +1,18 @@
 {
+  "version": 2,
   "builds": [
     {
-      "src": "chat_project/wsgi.py",
+      "src": "run_daphne.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "chat_project/wsgi.py"
+      "dest": "run_daphne.py"
     }
-  ]
+  ],
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "chat_project.settings"
+  }
 }
