@@ -30,9 +30,9 @@ CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 SECRET_KEY = "django-insecure-3*+!#k0j7q7gyz((cua@5=my9z(ym!kpkwv!lvuo=!_vf-=nk_"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app']
 
 # Application definition
 # Make sure 'rest_framework.authtoken' is in INSTALLED_APPS
@@ -147,14 +147,15 @@ REST_FRAMEWORK = {
     ],
 }
 
-CORS_ALLOW_ALL_ORIGINS = True  # Only use this for development
+
 CORS_ALLOW_CREDENTIALS = True
 
 # For production, you should specify allowed origins instead of allowing all
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://chatapp-indol-kappa.vercel.app"
+]
 
 # If you need specific headers
 CORS_ALLOW_HEADERS = [
