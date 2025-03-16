@@ -32,7 +32,7 @@ SECRET_KEY = "django-insecure-3*+!#k0j7q7gyz((cua@5=my9z(ym!kpkwv!lvuo=!_vf-=nk_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','https://chatapp-production-2066.up.railway.app','.railway.app']
 
 # Application definition
 # Make sure 'rest_framework.authtoken' is in INSTALLED_APPS
