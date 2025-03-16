@@ -1,21 +1,15 @@
 #!/bin/bash
 
-# Install Poetry
-pip install poetry==2.1.1
+# Exit immediately if a command exits with a non-zero status
+set -e  
 
-# Debug: Show versions
-python --version
-pip --version
+echo "Setting up virtual environment..."
+python -m venv /opt/venv
+source /opt/venv/bin/activate
 
-# Install dependencies using Poetry directly
-poetry config virtualenvs.create false
-poetry install --no-root
+echo "Upgrading pip and installing Poetry..."
+pip install --upgrade pip
+pip install poetry==2.1.1  # Ensure the correct version
 
-# Debug: Verify Django is installed
-python -c "import django; print(f'Django version: {django.get_version()}')"
-
-# Run Django migrations
-python manage.py migrate
-
-# Collect static files
-python manage.py collectstatic --noinput
+echo "Installing dependencies using Poetry..."
+poetry install --no-dev --no-interaction --no-ansi
