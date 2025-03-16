@@ -1,6 +1,6 @@
 const API_BASE_URL =
   process.env.NODE_ENV === 'production'
-    ? '' // Your production API URL
+    ? 'https://chatapp-production-2066.up.railway.app' // Your production API URL
     : 'http://localhost:8000';
 
 export const API_URLS = {
