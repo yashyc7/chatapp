@@ -9,7 +9,7 @@ pip --version
 
 # Install dependencies using Poetry directly
 poetry config virtualenvs.create false
-poetry install --no-dev --no-interaction --no-ansi
+poetry install --no-root
 
 # Debug: Verify Django is installed
 python -c "import django; print(f'Django version: {django.get_version()}')"
