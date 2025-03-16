@@ -32,7 +32,7 @@ SECRET_KEY = "django-insecure-3*+!#k0j7q7gyz((cua@5=my9z(ym!kpkwv!lvuo=!_vf-=nk_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 # Make sure 'rest_framework.authtoken' is in INSTALLED_APPS
@@ -153,8 +153,7 @@ CORS_ALLOW_CREDENTIALS = True
 # For production, you should specify allowed origins instead of allowing all
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://chatapp-indol-kappa.vercel.app"
+    "http://127.0.0.1:3000"
 ]
 
 # If you need specific headers
