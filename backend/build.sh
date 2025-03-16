@@ -6,12 +6,9 @@ pip install poetry==1.7.1
 python --version
 pip --version
 
-# Install Django directly first to ensure it's available
-pip install django
-
 # Install dependencies using Poetry
 poetry config virtualenvs.create false
-poetry install --only main --no-interaction
+poetry install --no-root --no-interaction
 
 # Debug: Verify Django is installed
 python -c "import django; print(f'Django version: {django.get_version()}')"
