@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -86,14 +87,11 @@ WSGI_APPLICATION = "chat_project.wsgi.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'HOST': os.getenv('host'),
-        'NAME': os.getenv('dbname'),
-        'USER': os.getenv('user'),
-        'PORT': os.getenv('port'),
-        'PASSWORD': os.getenv('password'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 
 
 # Password validation
@@ -178,3 +176,11 @@ CORS_ALLOW_METHODS = [
     "POST",
     "PUT",
 ]
+
+STATIC_URL = '/static/'
+
+# Location where static files will be collected
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Enable compression and caching support
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
