@@ -184,3 +184,5 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Enable compression and caching support
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+CORS_ALLOW_ALL_ORIGINS = True
