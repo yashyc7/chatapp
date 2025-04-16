@@ -24,6 +24,9 @@ var/
 venv/
 ENV/
 db.sqlite3
+/staticfiles/
+/staticfiles/*
+
 
 # Node
 node_modules/
