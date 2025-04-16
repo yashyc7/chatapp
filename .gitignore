@@ -1,50 +1,46 @@
-# Python
+# General
+*.log
+*.pyc
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
 .env
-.venv
-venv/
-ENV/
-db.sqlite3
-/staticfiles/
-/staticfiles/*
-
-
-# Node
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-.pnp/
-.pnp.js
-coverage/
-build/
+.env.*
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE
-.idea/
 .vscode/
-*.swp
-*.swo
+.idea/
+
+# Django (backend/)
+backend/__pycache__/
+backend/**/__pycache__/
+backend/db.sqlite3
+backend/staticfiles/
+backend/media/
+backend/.env
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/venv/
+backend/.venv/
+backend/.coverage
+backend/htmlcov/
+
+# Poetry
+poetry.lock
+
+# React (frontend/)
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+frontend/.eslintcache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific
+Thumbs.db
+ehthumbs.db
