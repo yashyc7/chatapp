@@ -1,10 +1,42 @@
-django==5.1.6
-djangorestframework==3.15.2
-django-cors-headers==4.7.0
-channels==4.2.0
-channels-redis==4.2.1
-daphne==4.1.2
-black==25.1.0
-psycopg[binary]==3.2.6
-python-dotenv==1.0.1
-django-environ==0.12.0
+asgiref==3.8.1 ; python_version >= "3.12" and python_version < "4"
+attrs==25.3.0 ; python_version >= "3.12" and python_version < "4"
+autobahn==24.4.2 ; python_version >= "3.12" and python_version < "4"
+automat==24.8.1 ; python_version >= "3.12" and python_version < "4"
+black==25.1.0 ; python_version >= "3.12" and python_version < "4"
+cffi==1.17.1 ; python_version >= "3.12" and python_version < "4" and platform_python_implementation != "PyPy"
+channels-redis==4.2.1 ; python_version >= "3.12" and python_version < "4"
+channels==4.2.0 ; python_version >= "3.12" and python_version < "4"
+click==8.1.8 ; python_version >= "3.12" and python_version < "4"
+colorama==0.4.6 ; python_version >= "3.12" and python_version < "4" and platform_system == "Windows"
+constantly==23.10.4 ; python_version >= "3.12" and python_version < "4"
+cryptography==44.0.2 ; python_version >= "3.12" and python_version < "4"
+daphne==4.1.2 ; python_version >= "3.12" and python_version < "4"
+django-cors-headers==4.7.0 ; python_version >= "3.12" and python_version < "4"
+django-environ==0.12.0 ; python_version >= "3.12" and python_version < "4"
+django==5.1.6 ; python_version >= "3.12" and python_version < "4"
+djangorestframework==3.15.2 ; python_version >= "3.12" and python_version < "4"
+hyperlink==21.0.0 ; python_version >= "3.12" and python_version < "4"
+idna==3.10 ; python_version >= "3.12" and python_version < "4"
+incremental==24.7.2 ; python_version >= "3.12" and python_version < "4"
+msgpack==1.1.0 ; python_version >= "3.12" and python_version < "4"
+mypy-extensions==1.0.0 ; python_version >= "3.12" and python_version < "4"
+packaging==24.2 ; python_version >= "3.12" and python_version < "4"
+pathspec==0.12.1 ; python_version >= "3.12" and python_version < "4"
+platformdirs==4.3.7 ; python_version >= "3.12" and python_version < "4"
+psycopg-binary==3.2.6 ; python_version >= "3.12" and python_version < "4" and implementation_name != "pypy"
+psycopg==3.2.6 ; python_version >= "3.12" and python_version < "4"
+pyasn1-modules==0.4.2 ; python_version >= "3.12" and python_version < "4"
+pyasn1==0.6.1 ; python_version >= "3.12" and python_version < "4"
+pycparser==2.22 ; python_version >= "3.12" and python_version < "4" and platform_python_implementation != "PyPy"
+pyopenssl==25.0.0 ; python_version >= "3.12" and python_version < "4"
+python-dotenv==1.0.1 ; python_version >= "3.12" and python_version < "4"
+redis==5.2.1 ; python_version >= "3.12" and python_version < "4"
+service-identity==24.2.0 ; python_version >= "3.12" and python_version < "4"
+setuptools==78.1.0 ; python_version >= "3.12" and python_version < "4"
+sqlparse==0.5.3 ; python_version >= "3.12" and python_version < "4"
+twisted==24.11.0 ; python_version >= "3.12" and python_version < "4"
+txaio==23.1.1 ; python_version >= "3.12" and python_version < "4"
+typing-extensions==4.13.2 ; python_version >= "3.12" and python_version < "4"
+tzdata==2025.2 ; python_version >= "3.12" and python_version < "4" and sys_platform == "win32"
+whitenoise==6.9.0 ; python_version >= "3.12" and python_version < "4"
+zope-interface==7.2 ; python_version >= "3.12" and python_version < "4"
