@@ -46,7 +46,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get(`${API_URLS}/api/messages/?conversation_id=${conversationId}`);
+      const response = await axios.get(`${API_URLS.messages}?conversation_id=${conversationId}`);
       setMessages(response.data);
       setLoading(false);
     } catch (error) {
@@ -57,7 +57,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
   const markMessagesAsRead = async () => {
     try {
-      await axios.post(`${API_URLS}/api/messages/mark_as_read/`, {
+      await axios.post(API_URLS.markAsRead, {
         conversation_id: conversationId
       });
       if (onConversationUpdate) {
@@ -124,7 +124,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     
     try {
       // Send message via REST API
-      const response = await axios.post(`${API_URLS}/api/messages/`, {
+      const response = await axios.post(API_URLS.messages, {
         conversation_id: conversationId,
         content: newMessage
       });
