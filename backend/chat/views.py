@@ -5,17 +5,17 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from .models import Conversation, Message
 from .serializers import UserSerializer, ConversationSerializer, MessageSerializer
-
+from django.core.exceptions import ValidationError
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         return Conversation.objects.filter(participants=self.request.user)
@@ -51,7 +51,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         conversation_id = self.request.query_params.get("conversation_id")
@@ -67,7 +67,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             )
             serializer.save(sender=self.request.user, conversation=conversation)
         except Conversation.DoesNotExist:
-            raise serializers.ValidationError("Invalid conversation ID")
+            raise ValidationError("Invalid conversation ID")
 
     @action(detail=False, methods=["post"])
     def mark_as_read(self, request):
