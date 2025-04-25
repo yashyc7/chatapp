@@ -15,6 +15,7 @@ import { Send as SendIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import MessageBubble from './MessageBubble';
+import { API_URLS } from '../config';
 
 function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
@@ -45,7 +46,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/messages/?conversation_id=${conversationId}`);
+      const response = await axios.get(`${API_URLS}/api/messages/?conversation_id=${conversationId}`);
       setMessages(response.data);
       setLoading(false);
     } catch (error) {
@@ -56,7 +57,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
   const markMessagesAsRead = async () => {
     try {
-      await axios.post('http://localhost:8000/api/messages/mark_as_read/', {
+      await axios.post(`${API_URLS}/api/messages/mark_as_read/`, {
         conversation_id: conversationId
       });
       if (onConversationUpdate) {
@@ -123,7 +124,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     
     try {
       // Send message via REST API
-      const response = await axios.post('http://localhost:8000/api/messages/', {
+      const response = await axios.post(`${API_URLS}/api/messages/`, {
         conversation_id: conversationId,
         content: newMessage
       });

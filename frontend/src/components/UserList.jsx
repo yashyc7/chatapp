@@ -18,6 +18,7 @@ import { Search as SearchIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-mat
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
+import { API_URLS } from '../config';
 
 function UserList({ onStartConversation }) {
   const [users, setUsers] = useState([]);
@@ -46,7 +47,7 @@ function UserList({ onStartConversation }) {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/users/');
+      const response = await axios.get(`${API_URLS}/api/users/`);
       // Filter out the current user
       const otherUsers = response.data.filter(u => u.id !== user.id);
       setUsers(otherUsers);
