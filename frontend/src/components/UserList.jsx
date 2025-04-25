@@ -47,7 +47,7 @@ function UserList({ onStartConversation }) {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API_URLS}/api/users/`);
+      const response = await axios.get(API_URLS.users);
       // Filter out the current user
       const otherUsers = response.data.filter(u => u.id !== user.id);
       setUsers(otherUsers);
