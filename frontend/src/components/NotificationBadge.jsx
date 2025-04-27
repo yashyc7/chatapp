@@ -14,7 +14,7 @@ import { Notifications as NotificationsIcon } from '@mui/icons-material';
 import { API_URLS } from '../config';
 import { useNavigate } from 'react-router-dom';
 
-function NotificationBadge() {
+function NotificationBadge({onSelectConversation}) {
   const [unreadMessages, setUnreadMessages] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
@@ -43,8 +43,10 @@ useEffect(() => {
     setAnchorEl(null);
   };
 
-  const handleNavigateToChat = conversationId => {
-    navigate(`/chat/conversation/${conversationId}`);
+  const handleNavigateToChat = (conversationId) => {
+    if (onSelectConversation) {
+      onSelectConversation(conversationId); // call parent
+    }
     handleCloseMenu();
   };
 

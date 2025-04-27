@@ -61,6 +61,26 @@ function ChatLayout() {
     }
   };
 
+const handleNotificationSelect = async (conversationId) => {
+  try {
+    let conversation = conversations.find(c => c.id === conversationId);
+
+    if (!conversation) {
+      // Fetch from API if not already loaded
+      const response = await axios.get(`${API_URLS.conversations}${conversationId}/`);
+      conversation = response.data;
+      setConversations(prev => [...prev, conversation]);
+    }
+
+    setSelectedConversation(conversation);
+    navigate(`/chat/conversation/${conversationId}`);
+  } catch (error) {
+    console.error('Error selecting conversation from notification:', error);
+  }
+};
+
+
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -163,7 +183,7 @@ function ChatLayout() {
                 'Chat'
               : 'Select a conversation'}
           </Typography>
-          <NotificationBadge/>
+          <NotificationBadge onSelectConversation={handleNotificationSelect}/>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography variant="body1" sx={{ mr: 2 }}>
               {user?.username}
