@@ -52,6 +52,8 @@ ALLOWED_HOSTS = [
     "https://chatapp-production-2066.up.railway.app",
     ".railway.app",
     ".vercel.app",
+    "chatapp-6k1l.onrender.com",
+    ".onrender.com",
 ]
 
 # Application definition
