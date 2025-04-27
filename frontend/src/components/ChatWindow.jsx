@@ -305,6 +305,12 @@ function ChatWindow({ conversation, onConversationUpdate }) {
             placeholder="Type a message"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevents adding a new line
+                handleSendMessage(e);
+              }
+            }}
             multiline
             maxRows={4}
             sx={{ 
