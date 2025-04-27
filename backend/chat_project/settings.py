@@ -167,7 +167,13 @@ REST_FRAMEWORK = {
 CORS_ALLOW_CREDENTIALS = True
 
 # For production, you should specify allowed origins instead of allowing all
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000","https://chatapp-gamma-brown.vercel.app","http://localhost:5173","http://127.0.0.1:5173"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://chatapp-gamma-brown.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 # If you need specific headers
 CORS_ALLOW_HEADERS = [
@@ -199,5 +205,3 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Enable compression and caching support
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-

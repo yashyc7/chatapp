@@ -18,6 +18,7 @@ import {
   MarkChatRead as MarkChatReadIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
+import NotificationBadge from './NotificationBadge';
 // Update these import statements to match the exact filename case on disk
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
@@ -162,6 +163,7 @@ function ChatLayout() {
                 'Chat'
               : 'Select a conversation'}
           </Typography>
+          <NotificationBadge/>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography variant="body1" sx={{ mr: 2 }}>
               {user?.username}

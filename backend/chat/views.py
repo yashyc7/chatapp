@@ -6,6 +6,8 @@ from django.db.models import Q
 from .models import Conversation, Message
 from .serializers import UserSerializer, ConversationSerializer, MessageSerializer
 from django.core.exceptions import ValidationError
+from rest_framework.decorators import api_view
+
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.all()
@@ -91,3 +93,15 @@ class MessageViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+@api_view(["GET"])
+def unread_messages(request):
+    user = request.user
+    unread_messages = (
+        Message.objects.filter(conversation__participants=user, is_read=False)
+        .exclude(sender=user)
+        .order_by("-timestamp")
+    )
+    serialized_messages = MessageSerializer(unread_messages, many=True).data
+    return Response(serialized_messages)
