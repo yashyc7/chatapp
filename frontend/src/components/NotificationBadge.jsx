@@ -19,21 +19,21 @@ function NotificationBadge() {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUnreadMessages = async () => {
-      try {
-        const response = await axios.get(API_URLS.unreadMessages);
+useEffect(() => {
+  const fetchUnreadMessages = async () => {
+    try {
+      const response = await axios.get(API_URLS.unreadMessages);
         setUnreadMessages(response.data);
-      } catch (error) {
-        console.error('Error fetching unread messages:', error);
-      }
-    };
+    } catch (error) {
+      console.error('Error fetching unread messages:', error);
+    }
+  };
 
-    fetchUnreadMessages();
-    const interval = setInterval(fetchUnreadMessages, 10000); // Poll every 10 seconds
+  fetchUnreadMessages();
+  const interval = setInterval(fetchUnreadMessages, 7777); // Poll every 10 seconds
 
-    return () => clearInterval(interval);
-  }, []);
+  return () => clearInterval(interval);
+}, []);
 
   const handleOpenMenu = event => {
     setAnchorEl(event.currentTarget);
@@ -76,7 +76,7 @@ function NotificationBadge() {
           unreadMessages.map(message => (
             <MenuItem
               key={message.id}
-              onClick={() => handleNavigateToChat(message.conversation.id)}
+              onClick={() => handleNavigateToChat(message.conversation_id)}
             >
               <ListItemAvatar>
                 <Avatar>

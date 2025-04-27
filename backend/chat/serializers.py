@@ -11,10 +11,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
+    conversation_id = serializers.IntegerField(source="conversation.id")
 
     class Meta:
         model = Message
-        fields = ["id", "sender", "content", "timestamp", "is_read"]
+        fields = ["id", "sender", "content", "timestamp", "is_read", "conversation_id"]
 
 
 class ConversationSerializer(serializers.ModelSerializer):
