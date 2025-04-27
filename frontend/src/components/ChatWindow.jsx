@@ -83,32 +83,32 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       console.log('WebSocket connection established');
     };
     
-    newSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chat_message') {
-        const message = data.message;
-        
-        // Only add the message if it belongs to the current conversation
-        if (message.conversation_id === parseInt(conversationId)) {
-          // Add the message to the list if it's not already there
-          setMessages(prevMessages => {
-            if (!prevMessages.find(m => m.id === message.id)) {
-              const newMessage = {
-                ...message,
-                sender: { id: message.sender_id }
-              };
-              return [...prevMessages, newMessage];
-            }
-            return prevMessages;
-          });
-          
-          // If the message is from the other user, mark it as read
-          if (message.sender_id !== user.id) {
-            markMessagesAsRead();
-          }
+newSocket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.type === 'chat_message') {
+    const message = data.message;
+
+    // Always check real-time conversation
+    const currentConversationId = parseInt(window.location.pathname.split('/').pop()); // or use your router
+
+    if (message.conversation_id === currentConversationId) {
+      setMessages((prevMessages) => {
+        if (!prevMessages.find((m) => m.id === message.id)) {
+          const newMessage = {
+            ...message,
+            sender: { id: message.sender_id },
+          };
+          return [...prevMessages, newMessage];
         }
-      }
-    };
+        return prevMessages;
+      });
+    } else {
+      console.log('Message ignored: not for this conversation');
+    }
+  }
+};
+
+
     
     newSocket.onclose = () => {
       console.log('WebSocket connection closed');
