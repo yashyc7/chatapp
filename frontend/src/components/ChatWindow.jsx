@@ -15,7 +15,7 @@ import { Send as SendIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import MessageBubble from './MessageBubble';
-import { API_URLS } from '../config';
+import API_BASE_URL, { API_URLS } from '../config';
 
 function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
@@ -76,7 +76,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     }
   
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = process.env.NODE_ENV === 'production' ? window.location.host : 'localhost:8000';
+    const host = process.env.NODE_ENV === 'production' ? API_BASE_URL.replace(/^https?:\/\//, ''): 'localhost:8000';
     const newSocket = new WebSocket(`${protocol}//${host}/ws/chat/${user.id}/`);
     
     newSocket.onopen = () => {
