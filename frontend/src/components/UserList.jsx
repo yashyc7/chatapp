@@ -116,28 +116,9 @@ function UserList({ onStartConversation }) {
                   <ListItemAvatar>
                     <Avatar>{user.username.charAt(0).toUpperCase()}</Avatar>
                   </ListItemAvatar>
-                  <ListItemText
-                    primary={user.username}
-                    secondary={
-                      <>
-                        {user.first_name && user.last_name ? (
-                          <Typography component="span" variant="body2" color="text.primary">
-                            {`${user.first_name} ${user.last_name}`}
-                          </Typography>
-                        ) : null}
-                        {user.email && (
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ display: 'block' }}
-                          >
-                            {user.email}
-                          </Typography>
-                        )}
-                      </>
-                    }
-                  />
+            <ListItemText
+              primary={user.username}
+              />
                 </ListItem>
                 <Divider variant="inset" component="li" />
               </React.Fragment>

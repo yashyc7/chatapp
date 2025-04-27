@@ -9,30 +9,39 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    initializeUser();
+  }, []);
+
+  const initializeUser = () => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
 
     if (token && userData) {
       setUser(JSON.parse(userData));
-      // Set the default Authorization header for all axios requests
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
       console.log('Token set in axios defaults:', token);
     } else {
-      // Clear the Authorization header if no token exists
-      delete axios.defaults.headers.common['Authorization'];
+      clearAxiosAuthHeader();
       console.log('No token found, Authorization header cleared');
     }
 
     setLoading(false);
-  }, []);
+  };
+
+  const clearAxiosAuthHeader = () => {
+    delete axios.defaults.headers.common['Authorization'];
+  };
 
   const login = async (username, password) => {
     try {
-      // const response = await axios.post('http://localhost:8000/api/login/', { username, password });
-      // with:
-      const response = await axios.post(API_URLS.login, { username, password });
-      const { token, user_id, username: uname, email } = response.data;
+      // Clear any old Authorization headers before login
+      clearAxiosAuthHeader();
 
+      const response = await axios.post(API_URLS.login, { username, password }, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const { token, user_id, username: uname, email } = response.data;
       const userData = { id: user_id, username: uname, email };
 
       localStorage.setItem('token', token);
@@ -44,16 +53,20 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (error) {
       console.error('Login error:', error);
+      if (error.response) {
+        console.error('Server error response:', error.response.data);
+      }
       return false;
     }
   };
 
-  const register = async userData => {
+  const register = async (userData) => {
     try {
-      console.log('Sending registration data:', userData);
-      const response = await axios.post(API_URLS.register, userData);
-      const { token, user_id, username, email } = response.data;
+      const response = await axios.post(API_URLS.register, userData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
 
+      const { token, user_id, username, email } = response.data;
       const user = { id: user_id, username, email };
 
       localStorage.setItem('token', token);
@@ -65,7 +78,6 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (error) {
       console.error('Registration error:', error);
-      // Add this to see the actual error response from the server
       if (error.response) {
         console.error('Server error response:', error.response.data);
       }
@@ -76,7 +88,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
+    clearAxiosAuthHeader();
     setUser(null);
   };
 
