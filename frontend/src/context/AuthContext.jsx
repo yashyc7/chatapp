@@ -37,9 +37,13 @@ export const AuthProvider = ({ children }) => {
       // Clear any old Authorization headers before login
       clearAxiosAuthHeader();
 
-      const response = await axios.post(API_URLS.login, { username, password }, {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await axios.post(
+        API_URLS.login,
+        { username, password },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
       const { token, user_id, username: uname, email } = response.data;
       const userData = { id: user_id, username: uname, email };
@@ -60,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
+  const register = async userData => {
     try {
       const response = await axios.post(API_URLS.register, userData, {
         headers: { 'Content-Type': 'application/json' },

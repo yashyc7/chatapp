@@ -116,9 +116,7 @@ function UserList({ onStartConversation }) {
                   <ListItemAvatar>
                     <Avatar>{user.username.charAt(0).toUpperCase()}</Avatar>
                   </ListItemAvatar>
-            <ListItemText
-              primary={user.username}
-              />
+                  <ListItemText primary={user.username} />
                 </ListItem>
                 <Divider variant="inset" component="li" />
               </React.Fragment>

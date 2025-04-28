@@ -14,26 +14,26 @@ import { Notifications as NotificationsIcon } from '@mui/icons-material';
 import { API_URLS } from '../config';
 import { useNavigate } from 'react-router-dom';
 
-function NotificationBadge({onSelectConversation}) {
+function NotificationBadge({ onSelectConversation }) {
   const [unreadMessages, setUnreadMessages] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
 
-useEffect(() => {
-  const fetchUnreadMessages = async () => {
-    try {
-      const response = await axios.get(API_URLS.unreadMessages);
+  useEffect(() => {
+    const fetchUnreadMessages = async () => {
+      try {
+        const response = await axios.get(API_URLS.unreadMessages);
         setUnreadMessages(response.data);
-    } catch (error) {
-      console.error('Error fetching unread messages:', error);
-    }
-  };
+      } catch (error) {
+        console.error('Error fetching unread messages:', error);
+      }
+    };
 
-  fetchUnreadMessages();
-  const interval = setInterval(fetchUnreadMessages, 7777); // Poll every 10 seconds
+    fetchUnreadMessages();
+    const interval = setInterval(fetchUnreadMessages, 7777); // Poll every 10 seconds
 
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleOpenMenu = event => {
     setAnchorEl(event.currentTarget);
@@ -43,7 +43,7 @@ useEffect(() => {
     setAnchorEl(null);
   };
 
-  const handleNavigateToChat = (conversationId) => {
+  const handleNavigateToChat = conversationId => {
     if (onSelectConversation) {
       onSelectConversation(conversationId); // call parent
     }
@@ -81,14 +81,9 @@ useEffect(() => {
               onClick={() => handleNavigateToChat(message.conversation_id)}
             >
               <ListItemAvatar>
-                <Avatar>
-                  {message.sender.username.charAt(0).toUpperCase()}
-                </Avatar>
+                <Avatar>{message.sender.username.charAt(0).toUpperCase()}</Avatar>
               </ListItemAvatar>
-              <ListItemText
-                primary={message.sender.username}
-                secondary={message.content}
-              />
+              <ListItemText primary={message.sender.username} secondary={message.content} />
             </MenuItem>
           ))
         )}

@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from .models import Conversation, Message
 from .serializers import UserSerializer, ConversationSerializer, MessageSerializer
 from django.core.exceptions import ValidationError
+from .pagination import MessagePagination
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -71,6 +72,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = MessagePagination
 
     def get_queryset(self):
         conversation_id = self.request.query_params.get("conversation_id")
