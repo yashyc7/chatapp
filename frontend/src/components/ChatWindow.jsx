@@ -9,32 +9,40 @@ import {
   Avatar,
   CircularProgress,
   Fade,
-  Grow,
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
+import { format } from 'date-fns';
+
+const groupMessagesByDate = (messages) => {
+  return messages.reduce((groups, message) => {
+    const date = format(new Date(message.timestamp), 'yyyy-MM-dd');
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+    return groups;
+  }, {});
+};
 
 function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
-  const messagesEndRef = useRef(null);
-  const { id: conversationId } = useParams();
-  const { user } = useContext(AuthContext);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const containerRef = useRef(null);
+  const { id: conversationId } = useParams();
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    if (conversationId && user) {
-      // Only proceed if both conversationId and user exist
-      fetchMessages();
+    if (conversationId && user?.id) {
+      fetchMessages(1, true);
       markMessagesAsRead();
       setupWebSocket();
     }
@@ -44,50 +52,105 @@ function ChatWindow({ conversation, onConversationUpdate }) {
         socket.close();
       }
     };
-  }, [conversationId, user]);
+  }, [conversationId, user?.id]);
 
-  useEffect(() => {
-    if (shouldScrollToBottom) {
-      scrollToBottom();
-    }
-  }, [messages]);
+  const setupWebSocket = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = API_BASE_URL.replace(/^https?:\/\//, '');
+    const wsUrl = `${protocol}//${host}/ws/chat/${user.id}/`;
+    const newSocket = new WebSocket(wsUrl);
 
-  const fetchMessages = async (newPage = 1) => {
+    newSocket.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    newSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'chat_message') {
+        const receivedMessage = data.message;
+
+        // Ensure the message belongs to current conversation
+        if (parseInt(receivedMessage.conversation_id) === parseInt(conversationId)) {
+          setMessages(prevMessages => {
+            // Check if message already exists to prevent duplicates
+            if (!prevMessages.some(m => m.id === receivedMessage.id)) {
+              // Add new message while maintaining chronological order
+              const updatedMessages = [...prevMessages, {
+                ...receivedMessage,
+                sender: { id: receivedMessage.sender_id }
+              }];
+
+              // Sort messages to maintain order (just in case)
+              return updatedMessages.sort(
+                (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+              );
+            }
+            return prevMessages;
+          });
+
+          // Scroll to bottom for new messages
+          setTimeout(() => {
+            containerRef.current?.scrollTo({
+              top: containerRef.current.scrollHeight,
+              behavior: 'smooth'
+            });
+          }, 100);
+        }
+      }
+    };
+
+    newSocket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    newSocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    setSocket(newSocket);
+  };
+
+  const fetchMessages = async (pageToFetch = 1, scrollToBottom = false) => {
     try {
-      if (!containerRef.current) return;
+      if (!conversationId) return;
 
-      let previousScrollHeight = containerRef.current.scrollHeight;
+      const container = containerRef.current;
+      const previousScrollHeight = container?.scrollHeight;
 
-      if (newPage === 1) {
-        setShouldScrollToBottom(true);
+      if (pageToFetch === 1) {
         setLoading(true);
       } else {
-        setShouldScrollToBottom(false);
         setLoadingMore(true);
       }
 
       const response = await axios.get(
-        `${API_URLS.messages}?conversation_id=${conversationId}&page=${newPage}`
+        `${API_URLS.messages}?conversation_id=${conversationId}&page=${pageToFetch}`
       );
-      const data = response.data;
 
-      if (newPage === 1) {
-        setMessages(data.results);
+      const data = response.data;
+      const sortedMessages = data.results.sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+      );
+
+      if (pageToFetch === 1) {
+        setMessages(sortedMessages);
       } else {
-        setMessages(prevMessages => [...data.results, ...prevMessages]);
+        setMessages((prev) => [...sortedMessages, ...prev]);
       }
 
-      setHasMore(data.next !== null);
-      setPage(newPage);
-
+      setHasMore(Boolean(data.next));
+      setPage(pageToFetch);
       setLoading(false);
       setLoadingMore(false);
 
-      // Maintain scroll position after loading older messages
-      if (newPage !== 1 && containerRef.current) {
-        const newScrollHeight = containerRef.current.scrollHeight;
-        containerRef.current.scrollTop = newScrollHeight - previousScrollHeight;
-      }
+      setTimeout(() => {
+        if (scrollToBottom) {
+          container?.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        } else if (pageToFetch > 1 && container) {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = newScrollHeight - previousScrollHeight;
+        }
+      }, 100);
     } catch (error) {
       console.error('Error fetching messages:', error);
       setLoading(false);
@@ -100,90 +163,32 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       await axios.post(API_URLS.markAsRead, {
         conversation_id: conversationId,
       });
-      if (onConversationUpdate) {
-        onConversationUpdate();
-      }
+      onConversationUpdate?.();
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }
   };
 
-  const setupWebSocket = () => {
-    // Check if user exists before accessing its properties
-    if (!user) {
-      console.error('User is not defined. Cannot set up WebSocket.');
-      return;
-    }
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host =
-      process.env.NODE_ENV === 'production'
-        ? API_BASE_URL.replace(/^https?:\/\//, '')
-        : 'localhost:8000';
-    const newSocket = new WebSocket(`${protocol}//${host}/ws/chat/${user.id}/`);
-
-    newSocket.onopen = () => {
-      console.log('WebSocket connection established');
-    };
-
-    newSocket.onmessage = event => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chat_message') {
-        const message = data.message;
-
-        // Always check real-time conversation
-        const currentConversationId = parseInt(window.location.pathname.split('/').pop()); // or use your router
-
-        if (message.conversation_id === currentConversationId) {
-          setMessages(prevMessages => {
-            if (!prevMessages.find(m => m.id === message.id)) {
-              const newMessage = {
-                ...message,
-                sender: { id: message.sender_id },
-              };
-              return [...prevMessages, newMessage];
-            }
-            return prevMessages;
-          });
-        } else {
-          console.log('Message ignored: not for this conversation');
-        }
-      }
-    };
-
-    newSocket.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-
-    setSocket(newSocket);
-  };
-
-  const handleSendMessage = async e => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-
     if (!newMessage.trim()) return;
 
     try {
-      // Send message via REST API
-      const response = await axios.post(API_URLS.messages, {
+      // Send via REST API
+      await axios.post(API_URLS.messages, {
         conversation_id: conversationId,
-        content: newMessage,
+        content: newMessage.trim(),
       });
 
-      // Also send via WebSocket for real-time delivery
-      if (
-        socket &&
-        socket.readyState === WebSocket.OPEN &&
-        conversation &&
-        conversation.participants
-      ) {
-        const otherUser = conversation.participants.find(p => p && p.id !== user?.id);
+      // Also send via WebSocket if available
+      if (socket?.readyState === WebSocket.OPEN) {
+        const otherUser = conversation.participants?.find((p) => p?.id !== user?.id);
         if (otherUser) {
           socket.send(
             JSON.stringify({
               type: 'chat_message',
-              message: newMessage,
-              conversation_id: parseInt(conversationId),
+              message: newMessage.trim(),
+              conversation_id: conversationId,
               recipient_id: otherUser.id,
             })
           );
@@ -191,18 +196,17 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       }
 
       setNewMessage('');
-
-      // Update the conversation list to show the latest message
-      if (onConversationUpdate) {
-        onConversationUpdate();
-      }
+      onConversationUpdate?.();
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleScroll = (e) => {
+    if (e.currentTarget.scrollTop === 0 && hasMore && !loadingMore) {
+      setLoadingMore(true);
+      fetchMessages(page + 1);
+    }
   };
 
   if (!conversation) {
@@ -214,235 +218,101 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           alignItems: 'center',
           height: '70vh',
           flexDirection: 'column',
-          gap: 2,
         }}
       >
-        <Fade in={true} timeout={800}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 4,
-              borderRadius: 4,
-              background: 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-            }}
-          >
-            <Typography variant="body1" align="center">
-              Select a conversation to start chatting
-            </Typography>
-          </Paper>
+        <Fade in>
+          <Typography>Select a conversation to start chatting</Typography>
         </Fade>
       </Box>
     );
   }
 
-  // Safely get the other user with null checks
-  const getOtherUser = () => {
-    if (!conversation || !conversation.participants || !user) {
-      return null;
-    }
-    return conversation.participants.find(p => p && p.id !== user.id) || null;
-  };
+  const otherParticipant =
+    conversation.participants?.find((p) => p?.id !== user?.id) || null;
 
-  const otherParticipant = getOtherUser();
+  const groupedMessages = groupMessagesByDate(messages);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: 'calc(100vh - 95px)',
-        pb: 1,
-      }}
-    >
-      <Fade in={true} timeout={500}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 1,
-            p: 2,
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-          }}
-        >
-          <Avatar
-            sx={{
-              mr: 2,
-              background: 'linear-gradient(45deg, #1976d2 30%, #03a9f4 90%)',
-              boxShadow: '0 2px 10px rgba(3, 169, 244, 0.2)',
-            }}
-          >
-            {otherParticipant?.username?.charAt(0).toUpperCase() || '?'}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 95px)', pb: 1 }}>
+      <Fade in>
+        <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+          <Avatar sx={{ mr: 2 }}>
+            {otherParticipant?.username?.[0]?.toUpperCase() || '?'}
           </Avatar>
-          <Typography variant="h6">{otherParticipant?.username || 'Unknown User'}</Typography>
+          <Typography variant="h6">{otherParticipant?.username || 'Unknown'}</Typography>
         </Box>
       </Fade>
 
       <Paper
-        elevation={3}
+        elevation={2}
         ref={containerRef}
+        onScroll={handleScroll}
         sx={{
           flexGrow: 1,
-          overflow: 'auto',
+          overflowY: 'auto',
           p: 2,
-          display: 'flex',
-          flexDirection: 'column',
           mb: 1,
-          borderRadius: '12px',
-          backdropFilter: 'blur(10px)',
-          backgroundColor: 'rgba(255, 255, 255, 0.7)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-        }}
-        onScroll={e => {
-          const { scrollTop } = e.currentTarget;
-          if (scrollTop === 0 && hasMore && !loadingMore) {
-            fetchMessages(page + 1);
-          }
+          backgroundColor: 'rgba(255,255,255,0.8)',
         }}
       >
-        {loading ? (
-          <Box
-            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
-          >
+        {loading && !messages.length ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', height: '100%', alignItems: 'center' }}>
             <CircularProgress />
           </Box>
-        ) : messages.length === 0 ? (
-          <Fade in={true} timeout={800}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <Typography variant="body1" color="textSecondary">
-                No messages yet. Start the conversation!
-              </Typography>
-            </Box>
-          </Fade>
         ) : (
-          <Fade in={true} timeout={500}>
-            <Box>
-              {loadingMore && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>
-                  <CircularProgress size={20} />
-                </Box>
-              )}
-
-              {messages.map((message, index) => (
-                <Grow in={true} key={message.id} timeout={300 + index * 100}>
-                  <Box>
-                    <MessageBubble
-                      message={message}
-                      isOwnMessage={message.sender && user ? message.sender.id === user.id : false}
-                    />
-                  </Box>
-                </Grow>
-              ))}
-              <div ref={messagesEndRef} />
-            </Box>
-          </Fade>
+          <>
+            {loadingMore && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
+            {Object.keys(groupedMessages).map((date) => (
+              <Box key={date}>
+                <Typography variant="caption" align="center" display="block" sx={{ my: 2 }}>
+                  {format(new Date(date), 'MMMM d, yyyy')}
+                </Typography>
+                {groupedMessages[date].map((message) => (
+                  <MessageBubble
+                    key={message.id}
+                    message={message}
+                    isOwnMessage={message.sender?.id === user?.id}
+                  />
+                ))}
+              </Box>
+            ))}
+          </>
         )}
       </Paper>
 
-      <Fade in={true} timeout={800}>
-        <Box
-          component="form"
-          onSubmit={handleSendMessage}
-          sx={{
-            display: 'flex',
-            borderRadius: '12px',
-            overflow: 'visible',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-            backdropFilter: 'blur(10px)',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            p: '6px',
-            position: 'relative',
-            bottom: 0,
-            zIndex: 1,
-            mt: 'auto',
-            mb: 0,
+      <Box
+        component="form"
+        onSubmit={handleSendMessage}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          p: 1,
+          backgroundColor: 'rgba(255,255,255,0.9)',
+        }}
+      >
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Type a message"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSendMessage(e);
+            }
           }}
-        >
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Type a message"
-            value={newMessage}
-            onChange={e => setNewMessage(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault(); // Prevents adding a new line
-                handleSendMessage(e);
-              }
-            }}
-            multiline
-            maxRows={4}
-            sx={{
-              mr: 1,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '10px',
-                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                minHeight: '56px',
-                padding: '8px 14px',
-                alignItems: 'center',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                },
-                '&.Mui-focused': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                },
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'transparent',
-              },
-              '& .MuiInputBase-input': {
-                overflow: 'auto',
-                maxHeight: '120px',
-                lineHeight: '1.5',
-                padding: '4px 0',
-              },
-            }}
-          />
-          <IconButton
-            color="primary"
-            type="submit"
-            disabled={!newMessage.trim()}
-            sx={{
-              alignSelf: 'flex-end',
-              p: '10px',
-              height: '56px',
-              width: '56px',
-              background: 'linear-gradient(45deg, #1976d2 30%, #03a9f4 90%)',
-              color: 'white',
-              borderRadius: '10px',
-              m: '4px',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.05)',
-                boxShadow: '0 4px 12px rgba(3, 169, 244, 0.4)',
-              },
-              '&:disabled': {
-                background: 'rgba(0, 0, 0, 0.12)',
-                color: 'rgba(0, 0, 0, 0.26)',
-              },
-            }}
-          >
-            <SendIcon />
-          </IconButton>
-        </Box>
-      </Fade>
+          multiline
+          maxRows={4}
+        />
+        <IconButton color="primary" type="submit" disabled={!newMessage.trim()}>
+          <SendIcon />
+        </IconButton>
+      </Box>
     </Box>
   );
 }

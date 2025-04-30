@@ -81,7 +81,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             Message.objects.select_related("sender", "conversation")
             .prefetch_related("conversation__participants")
             .filter(conversation__participants=self.request.user)
-            .order_by("timestamp")
+            .order_by("-timestamp")
         )
 
         if conversation_id:
