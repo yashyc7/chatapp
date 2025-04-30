@@ -12,6 +12,10 @@ import {
 } from '@mui/material';
 import { MarkChatRead as ChatIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
+import Particles from 'react-tsparticles';
+import { loadSlim } from 'tsparticles-slim';
+import { useCallback } from 'react';
+import { useMemo } from 'react';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -20,6 +24,10 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const particlesInit = useCallback(async engine => {
+    await loadSlim(engine);
+  }, []);
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -41,18 +49,79 @@ function Login() {
     }
   };
 
+  const particlesOptions = useMemo(
+    () => ({
+      fullScreen: { enable: false },
+      background: { color: 'transparent' },
+      particles: {
+        number: { value: 60 },
+        color: { value: '#1976d2' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.5 },
+        size: { value: 3 },
+        move: {
+          enable: true,
+          speed: 1,
+          direction: 'none',
+          random: true,
+          straight: false,
+          out_mode: 'out',
+          bounce: false,
+        },
+        links: {
+          enable: true,
+          distance: 150,
+          color: '#03a9f4',
+          opacity: 0.4,
+          width: 1,
+        },
+      },
+      interactivity: {
+        events: {
+          onHover: {
+            enable: true,
+            mode: 'repulse',
+          },
+        },
+        modes: {
+          repulse: {
+            distance: 100,
+            duration: 0.4,
+          },
+        },
+      },
+    }),
+    []
+  );
+
   return (
     <Box
       sx={{
+        position: 'relative',
+        minHeight: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         padding: 2,
+        overflow: 'hidden',
       }}
     >
-      <Container maxWidth="xs">
+      {/* Particles Background */}
+      <Particles
+        id="tsparticles"
+        init={particlesInit}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+        }}
+        options={particlesOptions}
+      />
+
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
         <Paper
           elevation={3}
           sx={{
@@ -61,8 +130,8 @@ function Login() {
             flexDirection: 'column',
             alignItems: 'center',
             borderRadius: 4,
-            background: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(8px)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             transition: 'all 0.3s ease-in-out',
@@ -121,14 +190,14 @@ function Login() {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                  backdropFilter: 'blur(5px)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
                   transition: 'all 0.3s ease-in-out',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
                   },
                   '&.Mui-focused': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
                   },
                 },
               }}
@@ -148,14 +217,14 @@ function Login() {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                  backdropFilter: 'blur(5px)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
                   transition: 'all 0.3s ease-in-out',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
                   },
                   '&.Mui-focused': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
                   },
                 },
               }}
