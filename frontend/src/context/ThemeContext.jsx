@@ -14,7 +14,7 @@ const lightTheme = {
     drawer: { main: '#f5f5f5', contrastText: '#1976d2' },
     avatar: { main: '#1976d2', contrastText: '#fff' },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 6 },
   typography: {
     fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
     h6: { fontWeight: 600 },
@@ -80,7 +80,7 @@ const darkTheme = {
     drawer: { main: '#23272f', contrastText: '#90caf9' },
     avatar: { main: '#90caf9', contrastText: '#23272f' },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 6 },
   typography: {
     fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
     h6: { fontWeight: 600 },
