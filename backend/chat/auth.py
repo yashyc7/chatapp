@@ -5,32 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-
-
-class RegistrationSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(style={"input_type": "password"}, write_only=True)
-
-    class Meta:
-        model = User
-        fields = [
-            "username",
-            "email",
-            "password",
-            "password2",
-            "first_name",
-            "last_name",
-        ]
-        extra_kwargs = {"password": {"write_only": True}}
-
-    def validate(self, data):
-        if data["password"] != data["password2"]:
-            raise serializers.ValidationError({"password": "Passwords must match."})
-        return data
-
-    def create(self, validated_data):
-        validated_data.pop("password2")
-        user = User.objects.create_user(**validated_data)
-        return user
+from .serializers import RegistrationSerializer
 
 
 @api_view(["POST"])
@@ -72,3 +47,30 @@ def login_user(request):
     return Response(
         {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
     )
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def google_login(self,request):
+    firebase_token=request.data.get("firebase_token")
+    if not firebase_token:
+        return Response(
+            {"error": "Firebase token is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    user=authenticate(request,firebase_token=firebase_token)
+    
+    if user:
+        token, created = Token.objects.get_or_create(user=user)
+        return Response(
+            {
+                "token": token.key,
+                "user_id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+    return Response(
+        {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+    )
+        
+    
