@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from .pagination import MessagePagination
 from django.db.models import Max
 
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only viewset for User model with basic optimizations
@@ -141,18 +142,16 @@ def unread_messages(request):
 
     # Step 1: Get latest message ID per conversation
     latest_unread_ids = (
-        Message.objects
-        .filter(conversation__participants=request.user, is_read=False)
+        Message.objects.filter(conversation__participants=request.user, is_read=False)
         .exclude(sender=request.user)
-        .values('conversation_id')
-        .annotate(latest_id=Max('id'))
-        .values_list('latest_id', flat=True)
+        .values("conversation_id")
+        .annotate(latest_id=Max("id"))
+        .values_list("latest_id", flat=True)
     )
 
     # Step 2: Fetch those messages
     latest_unread_messages = (
-        Message.objects
-        .select_related("sender", "conversation")
+        Message.objects.select_related("sender", "conversation")
         .prefetch_related("conversation__participants")
         .filter(id__in=latest_unread_ids)
         .order_by("-timestamp")

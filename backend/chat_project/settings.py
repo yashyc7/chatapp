@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 import environ
+import firebase_admin
+from firebase_admin import credentials
+import logging
+
+logger = logging.getLogger(__name__)
 
 env = environ.Env()
 
@@ -205,3 +210,54 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Enable compression and caching support
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "chat.firebase_auth.FireBaseAuthBackend",
+]
+
+
+FIREBASE_CREDENTIALS_PATH = env(
+    "FIREBASE_CREDENTIALS_PATH", default="chatterbox-admin-sdk.json"
+)
+FIREBASE_CREDENTIALS_FILE = Path(FIREBASE_CREDENTIALS_PATH)
+
+
+def load_firebase_sdk_from_file(file_path):
+    cred = credentials.Certificate(file_path)
+    firebase_admin.initialize_app(cred)
+
+
+def load_firebase_sdk_from_env(creds: dict):
+    cred = credentials.Certificate(creds)
+    firebase_admin.initialize_app(cred)
+
+
+try:
+    if FIREBASE_CREDENTIALS_FILE.exists():
+        logger.warn("Firebase credentials file found at: %s", FIREBASE_CREDENTIALS_FILE)
+        load_firebase_sdk_from_file(FIREBASE_CREDENTIALS_FILE)
+        logger.warn("Firebase Admin initialized using credentials file.")
+    else:
+        # File doesn't exist, fall back to environment variables
+        logger.warn(
+            "Firebase credentials file not found at: %s", FIREBASE_CREDENTIALS_FILE
+        )
+        firebase_credentials = {
+            "type": env("FIREBASE_TYPE", default=""),
+            "project_id": env("FIREBASE_PROJECT_ID", default=""),
+            "private_key_id": env("FIREBASE_PRIVATE_KEY_ID", default=""),
+            "private_key": env("FIREBASE_PRIVATE_KEY", default="").replace("\\n", "\n"),
+            "client_email": env("FIREBASE_CLIENT_EMAIL", default=""),
+            "client_id": env("FIREBASE_CLIENT_ID", default=""),
+            "auth_uri": env("FIREBASE_AUTH_URI", default=""),
+            "token_uri": env("FIREBASE_TOKEN_URI", default=""),
+            "auth_provider_x509_cert_url": env(
+                "FIREBASE_AUTH_PROVIDER_X509_CERT_URL", default=""
+            ),
+            "client_x509_cert_url": env("FIREBASE_CLIENT_X509_CERT_URL", default=""),
+        }
+        load_firebase_sdk_from_env(firebase_credentials)
+        logger.warn("Firebase Admin initialized using environment variables.")
+except Exception as e:
+    logger.error("Error when initializing the Firebase Admin application: %s", str(e))
