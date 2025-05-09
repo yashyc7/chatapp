@@ -65,9 +65,24 @@ function NotificationBadge({ onSelectConversation }) {
 
   const handleNavigateToChat = conversationId => {
     if (onSelectConversation) {
+      markMessagesAsRead(conversationId);  // Passing conversationId here
       onSelectConversation(conversationId);
     }
     handleCloseMenu();
+  };
+
+  const markMessagesAsRead = async (conversationId) => {  // Added conversationId parameter
+    try {
+      await axios.post(API_URLS.markAsRead, {
+        conversation_id: conversationId,
+      });
+      // Remove the marked messages from unreadMessages state
+      setUnreadMessages(prev => 
+        prev.filter(msg => msg.conversation_id !== conversationId)
+      );
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
   };
 
   return (
