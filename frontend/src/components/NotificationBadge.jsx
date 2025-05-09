@@ -25,16 +25,34 @@ function NotificationBadge({ onSelectConversation }) {
     const fetchUnreadMessages = async () => {
       try {
         const response = await axios.get(API_URLS.unreadMessages);
-        setUnreadMessages(response.data);
+        const newMessages = response.data;
+
+        // Deduplicate by message ID
+        setUnreadMessages(prevMessages => {
+          const allMessages = [...prevMessages, ...newMessages];
+          const uniqueMessages = [];
+
+          const seenIds = new Set();
+          for (const msg of allMessages) {
+            if (!seenIds.has(msg.id)) {
+              seenIds.add(msg.id);
+              uniqueMessages.push(msg);
+            }
+          }
+
+          return uniqueMessages;
+        });
       } catch (error) {
         console.error('Error fetching unread messages:', error);
       }
     };
 
     fetchUnreadMessages();
-    const interval = setInterval(fetchUnreadMessages, 7777);
+    const intervalId = setInterval(fetchUnreadMessages, 10000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleOpenMenu = event => {
@@ -90,10 +108,11 @@ function NotificationBadge({ onSelectConversation }) {
             mt: 1,
             backgroundColor: theme.palette.background.paper,
             backgroundImage: 'none',
-            borderRadius: theme.shape.borderRadius * 1.5,
-            border: `1px solid ${
-              theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
-            }`,
+            borderRadius: theme.shape.borderRadius,
+            border: `1px solid ${theme.palette.mode === 'light'
+                ? 'rgba(0, 0, 0, 0.05)'
+                : 'rgba(255, 255, 255, 0.1)'
+              }`,
             boxShadow: theme.shadows[8],
           },
         }}
@@ -118,11 +137,10 @@ function NotificationBadge({ onSelectConversation }) {
               sx={{
                 py: 1.5,
                 px: 2,
-                borderBottom: `1px solid ${
-                  theme.palette.mode === 'light'
+                borderBottom: `1px solid ${theme.palette.mode === 'light'
                     ? 'rgba(0, 0, 0, 0.05)'
                     : 'rgba(255, 255, 255, 0.1)'
-                }`,
+                  }`,
                 '&:last-child': {
                   borderBottom: 'none',
                 },

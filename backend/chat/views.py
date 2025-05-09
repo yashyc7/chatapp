@@ -6,7 +6,7 @@ from .models import Conversation, Message
 from .serializers import UserSerializer, ConversationSerializer, MessageSerializer
 from django.core.exceptions import ValidationError
 from .pagination import MessagePagination
-
+from django.db.models import Max
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -136,15 +136,27 @@ class MessageViewSet(viewsets.ModelViewSet):
 @api_view(["GET"])
 def unread_messages(request):
     """
-    Optimized unread messages endpoint with select_related
+    Return the latest unread message per conversation.
     """
-    unread_messages = (
-        Message.objects.select_related("sender", "conversation")
-        .prefetch_related("conversation__participants")
+
+    # Step 1: Get latest message ID per conversation
+    latest_unread_ids = (
+        Message.objects
         .filter(conversation__participants=request.user, is_read=False)
         .exclude(sender=request.user)
+        .values('conversation_id')
+        .annotate(latest_id=Max('id'))
+        .values_list('latest_id', flat=True)
+    )
+
+    # Step 2: Fetch those messages
+    latest_unread_messages = (
+        Message.objects
+        .select_related("sender", "conversation")
+        .prefetch_related("conversation__participants")
+        .filter(id__in=latest_unread_ids)
         .order_by("-timestamp")
     )
 
-    serialized_messages = MessageSerializer(unread_messages, many=True).data
-    return Response(serialized_messages)
+    serialized = MessageSerializer(latest_unread_messages, many=True).data
+    return Response(serialized)
