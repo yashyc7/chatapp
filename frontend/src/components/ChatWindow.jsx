@@ -16,8 +16,9 @@ import axios from 'axios';
 import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
 import { format } from 'date-fns';
+import { useTheme } from '@mui/material/styles';
 
-const groupMessagesByDate = (messages) => {
+const groupMessagesByDate = messages => {
   return messages.reduce((groups, message) => {
     const date = format(new Date(message.timestamp), 'yyyy-MM-dd');
     if (!groups[date]) {
@@ -39,6 +40,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   const containerRef = useRef(null);
   const { id: conversationId } = useParams();
   const { user } = useContext(AuthContext);
+  const theme = useTheme();
 
   useEffect(() => {
     if (conversationId && user?.id) {
@@ -64,7 +66,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       console.log('WebSocket connection established');
     };
 
-    newSocket.onmessage = (event) => {
+    newSocket.onmessage = event => {
       const data = JSON.parse(event.data);
       if (data.type === 'chat_message') {
         const receivedMessage = data.message;
@@ -75,15 +77,16 @@ function ChatWindow({ conversation, onConversationUpdate }) {
             // Check if message already exists to prevent duplicates
             if (!prevMessages.some(m => m.id === receivedMessage.id)) {
               // Add new message while maintaining chronological order
-              const updatedMessages = [...prevMessages, {
-                ...receivedMessage,
-                sender: { id: receivedMessage.sender_id }
-              }];
+              const updatedMessages = [
+                ...prevMessages,
+                {
+                  ...receivedMessage,
+                  sender: { id: receivedMessage.sender_id },
+                },
+              ];
 
               // Sort messages to maintain order (just in case)
-              return updatedMessages.sort(
-                (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-              );
+              return updatedMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             }
             return prevMessages;
           });
@@ -92,7 +95,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           setTimeout(() => {
             containerRef.current?.scrollTo({
               top: containerRef.current.scrollHeight,
-              behavior: 'smooth'
+              behavior: 'smooth',
             });
           }, 100);
         }
@@ -103,7 +106,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       console.log('WebSocket connection closed');
     };
 
-    newSocket.onerror = (error) => {
+    newSocket.onerror = error => {
       console.error('WebSocket error:', error);
     };
 
@@ -135,7 +138,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       if (pageToFetch === 1) {
         setMessages(sortedMessages);
       } else {
-        setMessages((prev) => [...sortedMessages, ...prev]);
+        setMessages(prev => [...sortedMessages, ...prev]);
       }
 
       setHasMore(Boolean(data.next));
@@ -169,7 +172,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     }
   };
 
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = async e => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
@@ -182,7 +185,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
       // Also send via WebSocket if available
       if (socket?.readyState === WebSocket.OPEN) {
-        const otherUser = conversation.participants?.find((p) => p?.id !== user?.id);
+        const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
         if (otherUser) {
           socket.send(
             JSON.stringify({
@@ -202,7 +205,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     }
   };
 
-  const handleScroll = (e) => {
+  const handleScroll = e => {
     if (e.currentTarget.scrollTop === 0 && hasMore && !loadingMore) {
       setLoadingMore(true);
       fetchMessages(page + 1);
@@ -227,16 +230,30 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     );
   }
 
-  const otherParticipant =
-    conversation.participants?.find((p) => p?.id !== user?.id) || null;
+  const otherParticipant = conversation.participants?.find(p => p?.id !== user?.id) || null;
 
   const groupedMessages = groupMessagesByDate(messages);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 95px)', pb: 1 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 95px)',
+        pb: 1,
+        background: theme.palette.background.default,
+        transition: 'background 0.3s',
+      }}
+    >
       <Fade in>
         <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
-          <Avatar sx={{ mr: 2 }}>
+          <Avatar
+            sx={{
+              mr: 2,
+              background: theme.palette.avatar?.main || theme.palette.primary.main,
+              color: theme.palette.avatar?.contrastText || '#fff',
+            }}
+          >
             {otherParticipant?.username?.[0]?.toUpperCase() || '?'}
           </Avatar>
           <Typography variant="h6">{otherParticipant?.username || 'Unknown'}</Typography>
@@ -252,11 +269,14 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           overflowY: 'auto',
           p: 2,
           mb: 1,
-          backgroundColor: 'rgba(255,255,255,0.8)',
+          backgroundColor: theme.palette.background.paper,
+          transition: 'background 0.3s',
         }}
       >
         {loading && !messages.length ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', height: '100%', alignItems: 'center' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', height: '100%', alignItems: 'center' }}
+          >
             <CircularProgress />
           </Box>
         ) : (
@@ -266,12 +286,12 @@ function ChatWindow({ conversation, onConversationUpdate }) {
                 <CircularProgress size={24} />
               </Box>
             )}
-            {Object.keys(groupedMessages).map((date) => (
+            {Object.keys(groupedMessages).map(date => (
               <Box key={date}>
                 <Typography variant="caption" align="center" display="block" sx={{ my: 2 }}>
                   {format(new Date(date), 'MMMM d, yyyy')}
                 </Typography>
-                {groupedMessages[date].map((message) => (
+                {groupedMessages[date].map(message => (
                   <MessageBubble
                     key={message.id}
                     message={message}
@@ -291,7 +311,10 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           display: 'flex',
           alignItems: 'center',
           p: 1,
-          backgroundColor: 'rgba(255,255,255,0.9)',
+          backgroundColor: theme.palette.background.paper,
+          borderRadius: theme.shape.borderRadius,
+          boxShadow: theme.shadows[1],
+          transition: 'background 0.3s',
         }}
       >
         <TextField
@@ -299,8 +322,8 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           variant="outlined"
           placeholder="Type a message"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => {
+          onChange={e => setNewMessage(e.target.value)}
+          onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleSendMessage(e);

@@ -16,8 +16,11 @@ import {
   Menu as MenuIcon,
   ExitToApp as LogoutIcon,
   MarkChatRead as MarkChatReadIcon,
+  Brightness4,
+  Brightness7,
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import NotificationBadge from './NotificationBadge';
 // Update these import statements to match the exact filename case on disk
 import ConversationList from './ConversationList';
@@ -34,6 +37,7 @@ function ChatLayout() {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user, logout } = useContext(AuthContext);
+  const { mode, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -116,7 +120,7 @@ function ChatLayout() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: 'rgba(255, 255, 255, 0.8)',
+        background: theme.palette.background.paper,
       }}
     >
       <Toolbar
@@ -150,7 +154,10 @@ function ChatLayout() {
     <Box
       sx={{
         display: 'flex',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, #181a20 0%, #23272f 100%)'
+            : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         minHeight: '100vh',
       }}
     >
@@ -159,7 +166,7 @@ function ChatLayout() {
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          background: 'rgba(255, 255, 255, 0.8)',
+          background: theme.palette.background.paper,
           backdropFilter: 'blur(10px)',
           color: 'text.primary',
           boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
@@ -182,6 +189,14 @@ function ChatLayout() {
               : 'Select a conversation'}
           </Typography>
           <NotificationBadge onSelectConversation={handleNotificationSelect} />
+          <IconButton
+            color="inherit"
+            onClick={toggleTheme}
+            sx={{ ml: 1 }}
+            aria-label="toggle theme"
+          >
+            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography variant="body1" sx={{ mr: 2 }}>
               {user?.username}
@@ -224,6 +239,7 @@ function ChatLayout() {
               boxSizing: 'border-box',
               width: drawerWidth,
               borderRadius: '0 16px 16px 0',
+              background: theme.palette.background.paper,
             },
           }}
         >
@@ -238,7 +254,7 @@ function ChatLayout() {
               width: drawerWidth,
               borderRadius: '0 16px 16px 0',
               border: 'none',
-              background: 'transparent',
+              background: theme.palette.background.paper,
             },
           }}
           open

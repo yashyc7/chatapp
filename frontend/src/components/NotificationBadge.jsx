@@ -13,11 +13,13 @@ import {
 import { Notifications as NotificationsIcon } from '@mui/icons-material';
 import { API_URLS } from '../config';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 
 function NotificationBadge({ onSelectConversation }) {
   const [unreadMessages, setUnreadMessages] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
+  const theme = useTheme();
 
   useEffect(() => {
     const fetchUnreadMessages = async () => {
@@ -30,7 +32,7 @@ function NotificationBadge({ onSelectConversation }) {
     };
 
     fetchUnreadMessages();
-    const interval = setInterval(fetchUnreadMessages, 7777); // Poll every 10 seconds
+    const interval = setInterval(fetchUnreadMessages, 7777);
 
     return () => clearInterval(interval);
   }, []);
@@ -45,15 +47,34 @@ function NotificationBadge({ onSelectConversation }) {
 
   const handleNavigateToChat = conversationId => {
     if (onSelectConversation) {
-      onSelectConversation(conversationId); // call parent
+      onSelectConversation(conversationId);
     }
     handleCloseMenu();
   };
 
   return (
     <>
-      <IconButton color="inherit" onClick={handleOpenMenu}>
-        <Badge badgeContent={unreadMessages.length} color="error">
+      <IconButton
+        color="inherit"
+        onClick={handleOpenMenu}
+        sx={{
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'scale(1.1)',
+          },
+        }}
+      >
+        <Badge
+          badgeContent={unreadMessages.length}
+          color="error"
+          sx={{
+            '& .MuiBadge-badge': {
+              backgroundColor: theme.palette.error.main,
+              color: theme.palette.error.contrastText,
+              fontWeight: 'bold',
+            },
+          }}
+        >
           <NotificationsIcon />
         </Badge>
       </IconButton>
@@ -62,15 +83,30 @@ function NotificationBadge({ onSelectConversation }) {
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
         PaperProps={{
-          style: {
+          elevation: 3,
+          sx: {
             maxHeight: 300,
             width: '350px',
+            mt: 1,
+            backgroundColor: theme.palette.background.paper,
+            backgroundImage: 'none',
+            borderRadius: theme.shape.borderRadius * 1.5,
+            border: `1px solid ${
+              theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
+            }`,
+            boxShadow: theme.shadows[8],
           },
         }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {unreadMessages.length === 0 ? (
-          <MenuItem>
-            <Typography variant="body2" color="textSecondary">
+          <MenuItem sx={{ py: 2 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ width: '100%', textAlign: 'center' }}
+            >
               No unread messages
             </Typography>
           </MenuItem>
@@ -79,11 +115,54 @@ function NotificationBadge({ onSelectConversation }) {
             <MenuItem
               key={message.id}
               onClick={() => handleNavigateToChat(message.conversation_id)}
+              sx={{
+                py: 1.5,
+                px: 2,
+                borderBottom: `1px solid ${
+                  theme.palette.mode === 'light'
+                    ? 'rgba(0, 0, 0, 0.05)'
+                    : 'rgba(255, 255, 255, 0.1)'
+                }`,
+                '&:last-child': {
+                  borderBottom: 'none',
+                },
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
             >
               <ListItemAvatar>
-                <Avatar>{message.sender.username.charAt(0).toUpperCase()}</Avatar>
+                <Avatar
+                  sx={{
+                    bgcolor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                  }}
+                >
+                  {message.sender.username.charAt(0).toUpperCase()}
+                </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={message.sender.username} secondary={message.content} />
+              <ListItemText
+                primary={
+                  <Typography variant="subtitle2" color="text.primary">
+                    {message.sender.username}
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {message.content}
+                  </Typography>
+                }
+              />
             </MenuItem>
           ))
         )}

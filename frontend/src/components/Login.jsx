@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -9,13 +9,14 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  IconButton,
 } from '@mui/material';
-import { MarkChatRead as ChatIcon } from '@mui/icons-material';
+import { MarkChatRead as ChatIcon, Brightness4, Brightness7 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
-import { useCallback } from 'react';
-import { useMemo } from 'react';
+import { useTheme } from '@mui/material/styles';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -23,6 +24,8 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
+  const { mode, toggleTheme } = useContext(ThemeContext);
+  const theme = useTheme();
   const navigate = useNavigate();
 
   const particlesInit = useCallback(async engine => {
@@ -55,7 +58,7 @@ function Login() {
       background: { color: 'transparent' },
       particles: {
         number: { value: 60 },
-        color: { value: '#1976d2' },
+        color: { value: theme.palette.primary.main },
         shape: { type: 'circle' },
         opacity: { value: 0.5 },
         size: { value: 3 },
@@ -71,7 +74,7 @@ function Login() {
         links: {
           enable: true,
           distance: 150,
-          color: '#03a9f4',
+          color: theme.palette.secondary.main,
           opacity: 0.4,
           width: 1,
         },
@@ -91,7 +94,7 @@ function Login() {
         },
       },
     }),
-    []
+    [theme.palette.primary.main, theme.palette.secondary.main]
   );
 
   return (
@@ -104,6 +107,8 @@ function Login() {
         alignItems: 'center',
         padding: 2,
         overflow: 'hidden',
+        background: theme.palette.background.default,
+        transition: 'background 0.3s',
       }}
     >
       {/* Particles Background */}
@@ -129,29 +134,53 @@ function Login() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: 4,
-            background: 'rgba(255, 255, 255, 0.85)',
+            borderRadius: theme.shape.borderRadius,
+            background: theme.palette.background.paper,
             backdropFilter: 'blur(8px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: theme.shadows[8],
+            border: `1px solid ${
+              theme.palette.mode === 'light' ? 'rgba(255,255,255,0.2)' : 'rgba(30,32,38,0.4)'
+            }`,
             transition: 'all 0.3s ease-in-out',
+            position: 'relative',
             '&:hover': {
-              boxShadow: '0 16px 70px -12.125px rgba(0,0,0,0.3)',
+              boxShadow: theme.shadows[16],
             },
           }}
         >
+          {/* Theme Toggle Button */}
+          <IconButton
+            onClick={toggleTheme}
+            color="inherit"
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              background: theme.palette.action.hover,
+              borderRadius: '50%',
+              zIndex: 2,
+              '&:hover': {
+                background: theme.palette.action.selected,
+              },
+            }}
+            aria-label="toggle theme"
+          >
+            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               mb: 3,
+              mt: 1,
             }}
           >
             <ChatIcon
               sx={{
                 fontSize: 40,
                 mr: 1,
-                color: 'primary.main',
+                color: theme.palette.primary.main,
               }}
             />
             <Typography
@@ -159,7 +188,7 @@ function Login() {
               component="h1"
               sx={{
                 fontWeight: 'bold',
-                background: 'linear-gradient(45deg, #1976d2 30%, #03a9f4 90%)',
+                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -190,14 +219,22 @@ function Login() {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  backgroundColor:
+                    theme.palette.mode === 'light' ? 'rgba(255,255,255,0.7)' : 'rgba(30,32,38,0.7)',
                   transition: 'all 0.3s ease-in-out',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backgroundColor:
+                      theme.palette.mode === 'light'
+                        ? 'rgba(255,255,255,0.9)'
+                        : 'rgba(30,32,38,0.9)',
                   },
                   '&.Mui-focused': {
-                    backgroundColor: 'rgba(255, 255, 255, 1)',
-                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                    backgroundColor:
+                      theme.palette.mode === 'light' ? 'rgba(255,255,255,1)' : 'rgba(30,32,38,1)',
+                    boxShadow:
+                      theme.palette.mode === 'light'
+                        ? '0 0 0 2px rgba(25, 118, 210, 0.2)'
+                        : '0 0 0 2px rgba(144,202,249,0.2)',
                   },
                 },
               }}
@@ -217,14 +254,22 @@ function Login() {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  backgroundColor:
+                    theme.palette.mode === 'light' ? 'rgba(255,255,255,0.7)' : 'rgba(30,32,38,0.7)',
                   transition: 'all 0.3s ease-in-out',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backgroundColor:
+                      theme.palette.mode === 'light'
+                        ? 'rgba(255,255,255,0.9)'
+                        : 'rgba(30,32,38,0.9)',
                   },
                   '&.Mui-focused': {
-                    backgroundColor: 'rgba(255, 255, 255, 1)',
-                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                    backgroundColor:
+                      theme.palette.mode === 'light' ? 'rgba(255,255,255,1)' : 'rgba(30,32,38,1)',
+                    boxShadow:
+                      theme.palette.mode === 'light'
+                        ? '0 0 0 2px rgba(25, 118, 210, 0.2)'
+                        : '0 0 0 2px rgba(144,202,249,0.2)',
                   },
                 },
               }}
@@ -239,12 +284,13 @@ function Login() {
                 mb: 2,
                 py: 1.5,
                 borderRadius: 2,
-                background: 'linear-gradient(45deg, #1976d2 30%, #03a9f4 90%)',
+                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
                 transition: 'all 0.3s ease-in-out',
                 position: 'relative',
+                color: theme.palette.getContrastText(theme.palette.primary.main),
                 '&:hover': {
                   transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 20px rgba(3, 169, 244, 0.4)',
+                  boxShadow: `0 8px 20px ${theme.palette.secondary.main}44`,
                 },
               }}
             >
@@ -258,7 +304,7 @@ function Login() {
                   sx={{
                     transition: 'all 0.3s ease-in-out',
                     '&:hover': {
-                      color: 'secondary.main',
+                      color: theme.palette.secondary.main,
                     },
                   }}
                 >

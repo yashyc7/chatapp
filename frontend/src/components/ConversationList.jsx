@@ -15,9 +15,11 @@ import {
 import { Person as PersonIcon, Add as AddIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
+import { useTheme } from '@mui/material/styles';
 
 function ConversationList({ conversations, onSelect, selectedConversation, loading = false }) {
   const { user } = useContext(AuthContext);
+  const theme = useTheme();
 
   const getOtherParticipant = conversation => {
     if (!conversation || !conversation.participants || !user) {
@@ -35,13 +37,12 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
     <List
       sx={{
         width: '100%',
-        bgcolor: 'background.paper',
+        bgcolor: theme.palette.background.paper,
         p: 0,
-        borderRadius: '12px',
         overflow: 'hidden',
         backdropFilter: 'blur(10px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        backgroundColor:
+          theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 32, 38, 0.7)',
       }}
     >
       <ListItem
@@ -58,14 +59,15 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
           variant="outlined"
           startIcon={<AddIcon />}
           sx={{
-            borderRadius: 2,
             py: 1,
+            mx: 1,
             backdropFilter: 'blur(10px)',
-            background: 'rgba(255, 255, 255, 0.5)',
+            background:
+              theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(30, 32, 38, 0.5)',
             transition: 'all 0.3s ease',
             '&:hover': {
               transform: 'translateY(-2px)',
-              boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)',
+              boxShadow: theme.shadows[4],
             },
           }}
         >
@@ -107,24 +109,28 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
                 selected={isSelected}
                 onClick={() => onSelect(conversation)}
                 sx={{
-                  backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                  backgroundColor: isSelected ? theme.palette.action.selected : 'inherit',
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                    backgroundColor: theme.palette.action.hover,
                   },
                   cursor: 'pointer',
-                  borderRadius: '8px',
                   my: 0.5,
+                  mx: 1,
                   transition: 'all 0.2s ease-in-out',
                   backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${
+                    theme.palette.mode === 'light'
+                      ? 'rgba(255, 255, 255, 0.1)'
+                      : 'rgba(30, 32, 38, 0.2)'
+                  }`,
                 }}
               >
                 <ListItemAvatar>
                   <Badge color="primary" variant="dot" invisible={!hasUnread}>
                     <Avatar
                       sx={{
-                        background: 'linear-gradient(45deg, #1976d2 30%, #03a9f4 90%)',
-                        boxShadow: '0 2px 10px rgba(3, 169, 244, 0.2)',
+                        background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+                        boxShadow: `0 2px 10px ${theme.palette.primary.main}33`,
                       }}
                     >
                       {otherUser.username ? (
@@ -141,6 +147,7 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
                       component="span"
                       variant="body1"
                       fontWeight={hasUnread ? 'bold' : 'normal'}
+                      color="text.primary"
                     >
                       {otherUser.username || 'Unknown User'}
                     </Typography>
@@ -150,7 +157,7 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
                       <Typography
                         component="span"
                         variant="body2"
-                        color="text.primary"
+                        color="text.secondary"
                         sx={{
                           display: 'inline',
                           fontWeight: hasUnread ? 'bold' : 'normal',
@@ -191,7 +198,9 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
         })
       ) : (
         <ListItem>
-          <ListItemText primary="No conversations yet" />
+          <ListItemText
+            primary={<Typography color="text.secondary">No conversations yet</Typography>}
+          />
         </ListItem>
       )}
     </List>
