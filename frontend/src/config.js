@@ -12,6 +12,7 @@ export const API_URLS = {
   startConversation: `${API_BASE_URL}/api/conversations/start_conversation/`,
   markAsRead: `${API_BASE_URL}/api/messages/mark_as_read/`,
   unreadMessages: `${API_BASE_URL}/api/unread_messages/`,
+  googleLogin: `${API_BASE_URL}/api/google_login/`,
 };
 
 export default API_BASE_URL;

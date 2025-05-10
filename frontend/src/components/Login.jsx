@@ -11,7 +11,7 @@ import {
   CircularProgress,
   IconButton,
 } from '@mui/material';
-import { MarkChatRead as ChatIcon, Brightness4, Brightness7 } from '@mui/icons-material';
+import { MarkChatRead as ChatIcon, Brightness4, Brightness7, Google } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import Particles from 'react-tsparticles';
@@ -23,7 +23,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
+  const { login, googleLogin } = useContext(AuthContext);
   const { mode, toggleTheme } = useContext(ThemeContext);
   const theme = useTheme();
   const navigate = useNavigate();
@@ -50,6 +50,18 @@ function Login() {
       setError('Invalid username or password');
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    const success = await googleLogin();
+    if (success) {
+      navigate('/chat');
+    } else {
+      setError('Google login failed');
+    }
+    setLoading(false);
   };
 
   const particlesOptions = useMemo(
@@ -295,6 +307,33 @@ function Login() {
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<Google />}
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              sx={{
+                mt: 2,
+                mb: 2,
+                py: 1.5,
+                borderRadius: 2,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                backgroundColor:
+                  theme.palette.mode === 'light' ? 'rgba(255,255,255,0.7)' : 'rgba(30,32,38,0.7)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  backgroundColor:
+                    theme.palette.mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,32,38,0.9)',
+                  borderColor: theme.palette.primary.main,
+                  boxShadow: `0 4px 10px ${theme.palette.primary.main}33`,
+                },
+              }}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign in with Google'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Link to="/register" style={{ textDecoration: 'none' }}>

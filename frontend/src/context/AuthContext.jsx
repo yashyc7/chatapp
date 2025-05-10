@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URLS } from '../config';
+import { auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 export const AuthContext = createContext();
 
@@ -63,6 +65,48 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
+  const googleLogin = async () => {
+    try {
+      // Clear any existing Authorization headers
+      clearAxiosAuthHeader();
+
+      // Trigger Google Sign-In popup
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // Get Firebase ID token
+      const firebaseToken = await user.getIdToken();
+
+      // Send token to your Django backend
+      const response = await axios.post(
+        API_URLS.googleLogin, // Ensure this points to your google_login endpoint
+        {
+          firebase_token: firebaseToken,
+          display_name: user.displayName || '',
+          photo_url: user.photoURL || '',
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const { token, user_id, username, email, photo_url } = response.data;
+      const userData = { id: user_id, username, email, photo_url };
+
+      // Store token and user data in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Set Authorization header
+      axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+      setUser(userData);
+      return true;
+    } catch (error) {
+      console.error('Google login error:', error);
+      if (error.response) {
+        console.error('Server error response:', error.response.data);
+      }
+      return false;
+    }
+  };
 
   const register = async userData => {
     try {
@@ -97,7 +141,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, googleLogin, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

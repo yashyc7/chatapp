@@ -178,6 +178,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://chatapp-gamma-brown.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
 ]
 
 # If you need specific headers
