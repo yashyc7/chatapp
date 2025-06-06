@@ -1,12 +1,14 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import Conversation, Message
 from .serializers import UserSerializer, ConversationSerializer, MessageSerializer
 from django.core.exceptions import ValidationError
 from .pagination import MessagePagination
 from django.db.models import Max
+
+User = get_user_model()
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):

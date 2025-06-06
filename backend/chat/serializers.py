@@ -1,12 +1,23 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import Conversation, Message
+
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "photo_url",
+            "firebase_user_id",
+            "firebase_extra_data",
+        ]
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -57,4 +68,3 @@ class RegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop("password2")
         user = User.objects.create_user(**validated_data)
         return user
-
