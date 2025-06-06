@@ -265,3 +265,5 @@ try:
         logger.warn("Firebase Admin initialized using environment variables.")
 except Exception as e:
     logger.error("Error when initializing the Firebase Admin application: %s", str(e))
+
+AUTH_USER_MODEL = "chat.User"

@@ -4,11 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from firebase_admin import auth
 
-# Get the Django User model
 User = get_user_model()
-import jwt
-
-# Setup logging
 logger = logging.getLogger(__name__)
 
 
@@ -18,60 +14,72 @@ class FireBaseAuthBackend:
     def authenticate(self, request, firebase_token=None, **kwargs):
         """Authenticate the user using the Firebase ID token."""
 
-        # Extract token from the request header if not provided
-        if firebase_token is None:
+        # Extract token from Authorization header if not explicitly passed
+        if not firebase_token:
             auth_header = request.META.get("HTTP_AUTHORIZATION")
             if auth_header and auth_header.startswith("Bearer "):
                 firebase_token = auth_header.split(" ")[1]
 
-        # If there's no token, return None
         if not firebase_token:
-            logger.warning("No Firebase token provided.")
+            logger.warning("Firebase token not found in request.")
             return None
 
         try:
             # Verify Firebase token
             decoded_token = auth.verify_id_token(firebase_token)
-            # decoded_token = jwt.decode(firebase_token, options={"verify_signature": False})
-            uid = decoded_token.get("uid")
+            logger.debug(f"Decoded Firebase token: {decoded_token}")
+
+            uid = decoded_token.get("uid") or decoded_token.get("sub")
             email = decoded_token.get("email")
             name = decoded_token.get("name", "")
+            picture = decoded_token.get("picture", "")
 
             if not email:
-                logger.error(f"Firebase token does not contain email: {decoded_token}")
+                logger.error("Firebase token does not contain an email address.")
                 return None
 
-            # Get or create user
+            # Create username based on email prefix if not explicitly set
+            username = email.split("@")[0]
+            # Get or create the user
             user, created = User.objects.get_or_create(
                 email=email,
                 defaults={
-                    "username": email.split("@")[0],
-                    "first_name": name,
+                    "username": username,
+                    "first_name": name.split(" ")[0],
+                    "last_name": name.split("")[1],
                     "firebase_user_id": uid,
                     "firebase_extra_data": decoded_token,
+                    "photo_url": picture,
                 },
             )
 
             if created:
-                logger.info(f"New user created: {email}")
+                logger.info(f"New Firebase user created: {email}")
+            else:
+                # Optional: sync updated name or picture
+                user.first_name = name
+                user.photo_url = picture
+                user.firebase_extra_data = decoded_token
+                user.save(
+                    update_fields=["first_name", "photo_url", "firebase_extra_data"]
+                )
 
-            return user  # Returning authenticated user
+            return user
 
-        except auth.ExpiredIdTokenError as e:
-            logger.error("Firebase Authentication error: Token has expired.")
-        except auth.InvalidIdTokenError as e:
-            logger.error("Firebase Authentication error: Invalid token provided.")
-        except auth.RevokedIdTokenError as e:
-            logger.error("Firebase Authentication error: Token has been revoked.")
-        except auth.UserDisabledError as e:
-            logger.error("Firebase Authentication error: User account is disabled.")
+        except auth.ExpiredIdTokenError:
+            logger.error("Firebase token has expired.")
+        except auth.InvalidIdTokenError:
+            logger.error("Invalid Firebase token provided.")
+        except auth.RevokedIdTokenError:
+            logger.error("Firebase token has been revoked.")
+        except auth.UserDisabledError:
+            logger.error("Firebase user account is disabled.")
         except Exception as e:
-            logger.exception(f"Firebase Authentication failed: {str(e)}")
+            logger.exception(f"Unexpected Firebase authentication error: {e}")
 
         return None
 
     def get_user(self, user_id):
-        """Retrieve user instance by ID."""
         try:
             return User.objects.get(pk=user_id)
         except ObjectDoesNotExist:

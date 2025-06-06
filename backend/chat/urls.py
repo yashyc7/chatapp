@@ -13,7 +13,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("register/", auth.register_user, name="register"),
     path("login/", auth.login_user, name="login"),
-    path("google_login/",auth.google_login,name="google_login")
+    path("google_login/", auth.google_login, name="google_login"),
 ]
 
 urlpatterns += [
