@@ -30,6 +30,7 @@ import axios from 'axios';
 import { API_URLS } from '../config';
 import UserAvatar from './UserAvatar';
 import AddIcon from '@mui/icons-material/Add';
+import ChatIcon from '@mui/icons-material/Chat';
 
 const drawerWidth = 300;
 
@@ -137,6 +138,13 @@ function ChatLayout() {
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
+        <ChatIcon
+          sx={{
+            fontSize: 40,
+            mr: 1,
+            color: theme.palette.primary.main,
+          }}
+        />
         <Typography
           variant="h5"
           sx={{
