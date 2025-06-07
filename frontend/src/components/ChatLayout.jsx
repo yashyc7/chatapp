@@ -320,12 +320,11 @@ function ChatLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 0,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           transition: 'all 0.3s ease-in-out',
         }}
       >
-        <Toolbar />
         <Fade in={true} timeout={800}>
           <Box>
             <Routes>
