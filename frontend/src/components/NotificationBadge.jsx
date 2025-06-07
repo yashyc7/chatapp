@@ -14,6 +14,7 @@ import { Notifications as NotificationsIcon } from '@mui/icons-material';
 import { API_URLS } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import UserAvatar from './UserAvatar';
 
 function NotificationBadge({ onSelectConversation }) {
   const [unreadMessages, setUnreadMessages] = useState([]);
@@ -164,14 +165,7 @@ function NotificationBadge({ onSelectConversation }) {
               }}
             >
               <ListItemAvatar>
-                <Avatar
-                  sx={{
-                    bgcolor: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
-                  }}
-                >
-                  {message.sender.username.charAt(0).toUpperCase()}
-                </Avatar>
+                <UserAvatar user={message.sender} />
               </ListItemAvatar>
               <ListItemText
                 primary={
