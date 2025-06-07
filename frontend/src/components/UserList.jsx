@@ -20,6 +20,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { API_URLS } from '../config';
+import UserAvatar from './UserAvatar'
 
 function UserList({ onStartConversation }) {
   const [users, setUsers] = useState([]);
@@ -186,14 +187,7 @@ function UserList({ onStartConversation }) {
                   }}
                 >
                   <ListItemAvatar>
-                    <Avatar
-                      sx={{
-                        bgcolor: theme.palette.primary.main,
-                        color: theme.palette.primary.contrastText,
-                      }}
-                    >
-                      {user.username.charAt(0).toUpperCase()}
-                    </Avatar>
+                    <UserAvatar user={user}/>
                   </ListItemAvatar>
                   <ListItemText
                     primary={<Typography color="text.primary">{user.username}</Typography>}

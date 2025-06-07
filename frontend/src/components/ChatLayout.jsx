@@ -28,6 +28,7 @@ import ChatWindow from './ChatWindow';
 import UserList from './UserList';
 import axios from 'axios';
 import { API_URLS } from '../config';
+import UserAvatar from './UserAvatar';
 
 const drawerWidth = 300;
 
@@ -201,14 +202,7 @@ function ChatLayout() {
             <Typography variant="body1" sx={{ mr: 2 }}>
               {user?.username}
             </Typography>
-            <Avatar
-              sx={{
-                mr: 2,
-                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
-              }}
-            >
-              {user?.username.charAt(0).toUpperCase()}
-            </Avatar>
+            <UserAvatar user={user} sx={{ mr: 2 }} />
             <IconButton
               color="primary"
               onClick={handleLogout}

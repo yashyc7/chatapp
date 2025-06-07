@@ -16,6 +16,7 @@ import { Person as PersonIcon, Add as AddIcon } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
+import UserAvatar from './UserAvatar';
 
 function ConversationList({ conversations, onSelect, selectedConversation, loading = false }) {
   const { user } = useContext(AuthContext);
@@ -127,18 +128,7 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
               >
                 <ListItemAvatar>
                   <Badge color="primary" variant="dot" invisible={!hasUnread}>
-                    <Avatar
-                      sx={{
-                        background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
-                        boxShadow: `0 2px 10px ${theme.palette.primary.main}33`,
-                      }}
-                    >
-                      {otherUser.username ? (
-                        otherUser.username.charAt(0).toUpperCase()
-                      ) : (
-                        <PersonIcon />
-                      )}
-                    </Avatar>
+                    <UserAvatar user={otherUser} sx={{ width: 40, height: 40 }}/>
                   </Badge>
                 </ListItemAvatar>
                 <ListItemText

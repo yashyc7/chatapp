@@ -17,6 +17,7 @@ import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
+import UserAvatar from './UserAvatar';
 
 const groupMessagesByDate = messages => {
   return messages.reduce((groups, message) => {
@@ -247,16 +248,8 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     >
       <Fade in>
         <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
-          <Avatar
-            sx={{
-              mr: 2,
-              background: theme.palette.avatar?.main || theme.palette.primary.main,
-              color: theme.palette.avatar?.contrastText || '#fff',
-            }}
-          >
-            {otherParticipant?.username?.[0]?.toUpperCase() || '?'}
-          </Avatar>
-          <Typography variant="h6">{otherParticipant?.username || 'Unknown'}</Typography>
+          <UserAvatar user={otherParticipant}/>
+          <Typography variant="h6" sx={{ ml: 2 }}>{otherParticipant?.username || 'Unknown'}</Typography>
         </Box>
       </Fade>
 
