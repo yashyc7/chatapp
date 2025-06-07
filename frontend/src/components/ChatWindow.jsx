@@ -17,7 +17,6 @@ import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
-import UserAvatar from './UserAvatar';
 
 const groupMessagesByDate = messages => {
   return messages.reduce((groups, message) => {
@@ -246,19 +245,12 @@ function ChatWindow({ conversation, onConversationUpdate }) {
         transition: 'background 0.3s',
       }}
     >
-      <Fade in>
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
-          <UserAvatar user={otherParticipant}/>
-          <Typography variant="h6" sx={{ ml: 2 }}>{otherParticipant?.username || 'Unknown'}</Typography>
-        </Box>
-      </Fade>
-
       <Paper
-        elevation={2}
+        elevation={0}
         ref={containerRef}
         onScroll={handleScroll}
         sx={{
-          flexGrow: 1,
+          flexGrow: 2,
           overflowY: 'auto',
           p: 2,
           mb: 1,

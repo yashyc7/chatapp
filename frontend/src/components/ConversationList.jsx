@@ -128,7 +128,7 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
               >
                 <ListItemAvatar>
                   <Badge color="primary" variant="dot" invisible={!hasUnread}>
-                    <UserAvatar user={otherUser} sx={{ width: 40, height: 40 }}/>
+                    <UserAvatar user={otherUser} sx={{ width: 40, height: 40 }} />
                   </Badge>
                 </ListItemAvatar>
                 <ListItemText

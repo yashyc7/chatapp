@@ -22,7 +22,7 @@ import {
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import NotificationBadge from './NotificationBadge';
-// Update these import statements to match the exact filename case on disk
+
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
 import UserList from './UserList';
@@ -183,10 +183,26 @@ function ChatLayout() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}
+          >
             {selectedConversation && selectedConversation.participants && user
-              ? selectedConversation.participants.find(p => p && p.id !== user.id)?.username ||
-                'Chat'
+              ? (() => {
+                  const otherUser = selectedConversation.participants.find(
+                    p => p && p.id !== user.id
+                  );
+                  return otherUser?.username ? (
+                    <>
+                      <UserAvatar user={otherUser} />
+                      <span style={{ marginLeft: 8 }}>{otherUser.username}</span>
+                    </>
+                  ) : (
+                    'Chat'
+                  );
+                })()
               : 'Select a conversation'}
           </Typography>
           <NotificationBadge onSelectConversation={handleNotificationSelect} />
