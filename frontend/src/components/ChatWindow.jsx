@@ -354,6 +354,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           onChange={e => setNewMessage(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
+              setNewMessage('');
               e.preventDefault();
               handleSendMessage(e);
             }
