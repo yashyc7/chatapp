@@ -78,127 +78,145 @@ function UserList({ onStartConversation }) {
     >
       <Box
         sx={{
-          p: 2,
+          height: '100vh',
           display: 'flex',
-          alignItems: 'center',
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          flexDirection: 'column',
+          bgcolor: 'background.default',
         }}
       >
-        <IconButton
-          component={Link}
-          to="/chat"
+        {/* Header */}
+        <Box
           sx={{
-            mr: 1,
-            color: theme.palette.primary.main,
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              transform: 'scale(1.1)',
-              color: theme.palette.primary.dark,
-            },
+            p: 0,
+            display: 'flex',
+            alignItems: 'center',
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            bgcolor: 'background.paper',
           }}
         >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography
-          variant="h6"
-          sx={{
-            flexGrow: 1,
-            color: theme.palette.text.primary,
-          }}
-        >
-          New Chat
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2 }}>
-        <TextField
-          fullWidth
-          placeholder="Search users..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: theme.shape.borderRadius,
-              backgroundColor:
-                theme.palette.mode === 'light'
-                  ? 'rgba(255, 255, 255, 0.7)'
-                  : 'rgba(30, 32, 38, 0.7)',
-              transition: 'all 0.3s ease-in-out',
-              '&:hover': {
+          <IconButton component={Link} to="/chat" sx={{ mr: 1 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6">New Chat</Typography>
+        </Box>
+
+        {/* Search Box */}
+        <Box sx={{ p: 2 }}>
+          <TextField
+            fullWidth
+            placeholder="Search users..."
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: theme.shape.borderRadius,
                 backgroundColor:
                   theme.palette.mode === 'light'
-                    ? 'rgba(255, 255, 255, 0.9)'
-                    : 'rgba(30, 32, 38, 0.9)',
+                    ? 'rgba(255, 255, 255, 0.7)'
+                    : 'rgba(30, 32, 38, 0.7)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  backgroundColor:
+                    theme.palette.mode === 'light'
+                      ? 'rgba(255, 255, 255, 0.9)'
+                      : 'rgba(30, 32, 38, 0.9)',
+                },
+                '&.Mui-focused': {
+                  backgroundColor:
+                    theme.palette.mode === 'light'
+                      ? 'rgba(255, 255, 255, 1)'
+                      : 'rgba(30, 32, 38, 1)',
+                  boxShadow: `0 0 0 2px ${theme.palette.primary.main}33`,
+                },
               },
-              '&.Mui-focused': {
-                backgroundColor:
-                  theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 1)' : 'rgba(30, 32, 38, 1)',
-                boxShadow: `0 0 0 2px ${theme.palette.primary.main}33`,
-              },
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Box>
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
         </Box>
-      ) : (
-        <List
+
+        {/* Users List */}
+        <Box
           sx={{
-            width: '100%',
-            bgcolor: 'background.paper',
-            '.MuiListItem-root': {
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                backgroundColor: theme.palette.action.hover,
-              },
+            flexGrow: 1,
+            overflow: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '4px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: theme.palette.divider,
+              borderRadius: '4px',
             },
           }}
         >
-          {filteredUsers.length === 0 ? (
-            <ListItem>
-              <ListItemText
-                primary={<Typography color="text.primary">No users found</Typography>}
-                secondary={
-                  <Typography color="text.secondary">
-                    {searchQuery ? 'Try a different search term' : 'No other users are registered'}
-                  </Typography>
-                }
-              />
-            </ListItem>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
           ) : (
-            filteredUsers.map(user => (
-              <React.Fragment key={user.id}>
-                <ListItem
-                  alignItems="flex-start"
-                  button
-                  onClick={() => onStartConversation(user.id)}
-                  sx={{
-                    '&:hover': {
-                      backgroundColor: theme.palette.action.hover,
-                    },
-                  }}
-                >
-                  <ListItemAvatar>
-                    <UserAvatar user={user} />
-                  </ListItemAvatar>
+            <List
+              sx={{
+                width: '100%',
+                bgcolor: 'background.paper',
+                '.MuiListItem-root': {
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                  },
+                },
+              }}
+            >
+              {filteredUsers.length === 0 ? (
+                <ListItem>
                   <ListItemText
-                    primary={<Typography color="text.primary">{user.username}</Typography>}
+                    primary={<Typography color="text.primary">No users found</Typography>}
+                    secondary={
+                      <Typography color="text.secondary">
+                        {searchQuery
+                          ? 'Try a different search term'
+                          : 'No other users are registered'}
+                      </Typography>
+                    }
                   />
                 </ListItem>
-                <Divider variant="inset" component="li" />
-              </React.Fragment>
-            ))
+              ) : (
+                filteredUsers.map(user => (
+                  <React.Fragment key={user.id}>
+                    <ListItem
+                      alignItems="flex-start"
+                      button
+                      onClick={() => onStartConversation(user.id)}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: theme.palette.action.hover,
+                        },
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <UserAvatar user={user} />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={<Typography color="text.primary">{user.username}</Typography>}
+                      />
+                    </ListItem>
+                    <Divider variant="inset" component="li" />
+                  </React.Fragment>
+                ))
+              )}
+            </List>
           )}
-        </List>
-      )}
+        </Box>
+      </Box>
     </Paper>
   );
 }

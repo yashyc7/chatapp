@@ -4,6 +4,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 export const ThemeContext = createContext();
 
+const drawerWidth = 240;
+
 const lightTheme = {
   palette: {
     mode: 'light',
@@ -54,8 +56,10 @@ const lightTheme = {
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          background: '#f5f5f5',
-          color: '#1976d2',
+          width: drawerWidth,
+          border: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
         },
       },
     },
@@ -64,6 +68,13 @@ const lightTheme = {
         root: {
           background: '#1976d2',
           color: '#fff',
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          margin: '0',
         },
       },
     },
