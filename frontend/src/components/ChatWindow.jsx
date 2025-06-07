@@ -171,37 +171,64 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       console.error('Error marking messages as read:', error);
     }
   };
-
   const handleSendMessage = async e => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    const messageContent = newMessage.trim();
+    if (!messageContent) return;
+
+    // Clear input immediately
+    setNewMessage('');
 
     try {
-      // Send via REST API
-      await axios.post(API_URLS.messages, {
-        conversation_id: conversationId,
-        content: newMessage.trim(),
-      });
+      // Optimistically add message to UI
+      const optimisticMessage = {
+        id: `temp-${Date.now()}`,
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+        sender: { id: user?.id },
+        is_read: false,
+      };
 
-      // Also send via WebSocket if available
-      if (socket?.readyState === WebSocket.OPEN) {
-        const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
-        if (otherUser) {
-          socket.send(
-            JSON.stringify({
-              type: 'chat_message',
-              message: newMessage.trim(),
-              conversation_id: conversationId,
-              recipient_id: otherUser.id,
+      setMessages(prev => [...prev, optimisticMessage]);
+
+      // Scroll to bottom immediately
+      setTimeout(() => {
+        containerRef.current?.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }, 10);
+
+      // Send message to backend
+      const [restResponse] = await Promise.all([
+        axios.post(API_URLS.messages, {
+          conversation_id: conversationId,
+          content: messageContent,
+        }),
+        socket?.readyState === WebSocket.OPEN 
+          ? new Promise(resolve => {
+              const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
+              if (otherUser) {
+                socket.send(
+                  JSON.stringify({
+                    type: 'chat_message',
+                    message: messageContent,
+                    conversation_id: conversationId,
+                    recipient_id: otherUser.id,
+                  })
+                );
+              }
+              resolve();
             })
-          );
-        }
-      }
+          : Promise.resolve()
+      ]);
 
-      setNewMessage('');
+      // Update conversation list
       onConversationUpdate?.();
+
     } catch (error) {
       console.error('Error sending message:', error);
+      // Optionally show error toast/notification
     }
   };
 
@@ -333,6 +360,12 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           }}
           multiline
           maxRows={4}
+          sx={{
+            mr: 1,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+            }
+          }}
         />
         <IconButton color="primary" type="submit" disabled={!newMessage.trim()}>
           <SendIcon />
