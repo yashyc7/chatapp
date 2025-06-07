@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -10,6 +10,7 @@ import {
   IconButton,
   Avatar,
   Fade,
+  Button,
   useTheme,
 } from '@mui/material';
 import {
@@ -22,13 +23,13 @@ import {
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import NotificationBadge from './NotificationBadge';
-// Update these import statements to match the exact filename case on disk
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
 import UserList from './UserList';
 import axios from 'axios';
 import { API_URLS } from '../config';
 import UserAvatar from './UserAvatar';
+import AddIcon from '@mui/icons-material/Add';
 
 const drawerWidth = 300;
 
@@ -118,34 +119,76 @@ function ChatLayout() {
   const drawer = (
     <Box
       sx={{
-        height: '100%',
+        height: '100vh',
+        width: drawerWidth,
         display: 'flex',
         flexDirection: 'column',
-        background: theme.palette.background.paper,
+        bgcolor: 'background.default',
+        borderRight: `1px solid ${theme.palette.divider}`,
       }}
     >
-      <Toolbar
+      {/* ChatterBox Header */}
+      <Box
         sx={{
+          p: 2,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
-          color: 'white',
-          borderRadius: '0 0 16px 16px',
-          mb: 1,
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <MarkChatReadIcon sx={{ mr: 1, fontSize: 28 }} />
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            color: theme.palette.primary.main,
+            mb: 2,
+          }}
+        >
           ChatterBox
         </Typography>
-      </Toolbar>
-      <Divider />
-      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<AddIcon />}
+          component={Link}
+          to="/chat/users"
+          sx={{
+            py: 1,
+            borderRadius: 1,
+            justifyContent: 'flex-start',
+            '&:hover': {
+              transform: 'translateY(-1px)',
+              boxShadow: 1,
+            },
+          }}
+        >
+          New Conversation
+        </Button>
+      </Box>
+
+      {/* Conversation List */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflow: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: theme.palette.divider,
+            borderRadius: '4px',
+          },
+        }}
+      >
         <ConversationList
           conversations={conversations}
           onSelect={handleConversationSelect}
           selectedConversation={selectedConversation}
+          loading={loading}
         />
       </Box>
     </Box>
@@ -160,6 +203,7 @@ function ChatLayout() {
             ? 'linear-gradient(135deg, #181a20 0%, #23272f 100%)'
             : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         minHeight: '100vh',
+        width: '100%',
       }}
     >
       <AppBar
@@ -169,8 +213,8 @@ function ChatLayout() {
           ml: { sm: `${drawerWidth}px` },
           background: theme.palette.background.paper,
           backdropFilter: 'blur(10px)',
-          color: 'text.primary',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          boxShadow: 'none',
         }}
       >
         <Toolbar>
@@ -183,10 +227,26 @@ function ChatLayout() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}
+          >
             {selectedConversation && selectedConversation.participants && user
-              ? selectedConversation.participants.find(p => p && p.id !== user.id)?.username ||
-                'Chat'
+              ? (() => {
+                  const otherUser = selectedConversation.participants.find(
+                    p => p && p.id !== user.id
+                  );
+                  return otherUser?.username ? (
+                    <>
+                      <UserAvatar user={otherUser} />
+                      <span style={{ marginLeft: 8 }}>{otherUser.username}</span>
+                    </>
+                  ) : (
+                    'Chat'
+                  );
+                })()
               : 'Select a conversation'}
           </Typography>
           <NotificationBadge onSelectConversation={handleNotificationSelect} />
@@ -260,12 +320,11 @@ function ChatLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 0,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           transition: 'all 0.3s ease-in-out',
         }}
       >
-        <Toolbar />
         <Fade in={true} timeout={800}>
           <Box>
             <Routes>

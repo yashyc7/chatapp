@@ -18,7 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 import UserAvatar from './UserAvatar';
 
-function ConversationList({ conversations, onSelect, selectedConversation, loading = false }) {
+function ConversationList({ conversations, onSelect, selectedConversation, loading }) {
   const { user } = useContext(AuthContext);
   const theme = useTheme();
 
@@ -38,43 +38,14 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
     <List
       sx={{
         width: '100%',
-        bgcolor: theme.palette.background.paper,
+        bgcolor: 'background.paper',
         p: 0,
-        overflow: 'hidden',
-        backdropFilter: 'blur(10px)',
-        backgroundColor:
-          theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 32, 38, 0.7)',
+        '& .MuiListItem-root': {
+          px: 2, // Add consistent padding
+          py: 1,
+        },
       }}
     >
-      <ListItem
-        component={Link}
-        to="/chat/users"
-        sx={{
-          textDecoration: 'none',
-          color: 'inherit',
-          transition: 'all 0.3s ease',
-        }}
-      >
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<AddIcon />}
-          sx={{
-            py: 1,
-            mx: 1,
-            backdropFilter: 'blur(10px)',
-            background:
-              theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(30, 32, 38, 0.5)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: theme.shadows[4],
-            },
-          }}
-        >
-          New Conversation
-        </Button>
-      </ListItem>
       <Divider />
 
       {loading ? (
@@ -128,7 +99,7 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
               >
                 <ListItemAvatar>
                   <Badge color="primary" variant="dot" invisible={!hasUnread}>
-                    <UserAvatar user={otherUser} sx={{ width: 40, height: 40 }}/>
+                    <UserAvatar user={otherUser} sx={{ width: 40, height: 40 }} />
                   </Badge>
                 </ListItemAvatar>
                 <ListItemText

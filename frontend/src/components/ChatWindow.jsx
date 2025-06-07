@@ -17,7 +17,6 @@ import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
-import UserAvatar from './UserAvatar';
 
 const groupMessagesByDate = messages => {
   return messages.reduce((groups, message) => {
@@ -240,30 +239,41 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 95px)',
-        pb: 1,
-        background: theme.palette.background.default,
-        transition: 'background 0.3s',
+        height: '100vh',
+        width: '100%',
+        bgcolor: 'background.default',
       }}
     >
-      <Fade in>
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
-          <UserAvatar user={otherParticipant}/>
-          <Typography variant="h6" sx={{ ml: 2 }}>{otherParticipant?.username || 'Unknown'}</Typography>
-        </Box>
-      </Fade>
+      {/* Chat Header */}
+      <Box
+        sx={{
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: 'background.paper',
+        }}
+      >
+        {/* ...existing header content... */}
+      </Box>
 
-      <Paper
-        elevation={2}
+      {/* Messages Container */}
+      <Box
         ref={containerRef}
-        onScroll={handleScroll}
         sx={{
           flexGrow: 1,
-          overflowY: 'auto',
+          overflow: 'auto',
           p: 2,
-          mb: 1,
-          backgroundColor: theme.palette.background.paper,
-          transition: 'background 0.3s',
+          '&::-webkit-scrollbar': {
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: theme.palette.divider,
+            borderRadius: '4px',
+          },
         }}
       >
         {loading && !messages.length ? (
@@ -295,19 +305,18 @@ function ChatWindow({ conversation, onConversationUpdate }) {
             ))}
           </>
         )}
-      </Paper>
+      </Box>
 
+      {/* Message Input */}
       <Box
         component="form"
         onSubmit={handleSendMessage}
         sx={{
           display: 'flex',
           alignItems: 'center',
-          p: 1,
-          backgroundColor: theme.palette.background.paper,
-          borderRadius: theme.shape.borderRadius,
-          boxShadow: theme.shadows[1],
-          transition: 'background 0.3s',
+          p: 2,
+          borderTop: `1px solid ${theme.palette.divider}`,
+          bgcolor: 'background.paper',
         }}
       >
         <TextField
