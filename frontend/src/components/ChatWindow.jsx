@@ -205,7 +205,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           conversation_id: conversationId,
           content: messageContent,
         }),
-        socket?.readyState === WebSocket.OPEN 
+        socket?.readyState === WebSocket.OPEN
           ? new Promise(resolve => {
               const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
               if (otherUser) {
@@ -220,12 +220,11 @@ function ChatWindow({ conversation, onConversationUpdate }) {
               }
               resolve();
             })
-          : Promise.resolve()
+          : Promise.resolve(),
       ]);
 
       // Update conversation list
       onConversationUpdate?.();
-
     } catch (error) {
       console.error('Error sending message:', error);
       // Optionally show error toast/notification
@@ -354,7 +353,6 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           onChange={e => setNewMessage(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
-              setNewMessage('');
               e.preventDefault();
               handleSendMessage(e);
             }
@@ -365,7 +363,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
             mr: 1,
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
-            }
+            },
           }}
         />
         <IconButton color="primary" type="submit" disabled={!newMessage.trim()}>
