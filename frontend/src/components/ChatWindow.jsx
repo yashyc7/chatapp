@@ -4,6 +4,7 @@ import {
   Box,
   TextField,
   IconButton,
+  Paper,
   Typography,
   Avatar,
   CircularProgress,
@@ -18,28 +19,44 @@ import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
-import debounce from 'lodash.debounce';
 
 const groupMessagesByDate = messages => {
   return messages.reduce((groups, message) => {
     const date = format(new Date(message.timestamp), 'yyyy-MM-dd');
-    if (!groups[date]) groups[date] = [];
+    if (!groups[date]) {
+      groups[date] = [];
+    }
     groups[date].push(message);
     return groups;
   }, {});
 };
 
-const createFlatMessageList = groupedMessages => {
+// Create flat list of items including date separators
+const createFlatMessageList = (groupedMessages) => {
   const flatList = [];
+
   Object.keys(groupedMessages).forEach(date => {
-    flatList.push({ type: 'date', date, id: `date-${date}` });
+    // Add date separator
+    flatList.push({
+      type: 'date',
+      date: date,
+      id: `date-${date}`,
+    });
+
+    // Add messages for this date
     groupedMessages[date].forEach(message => {
-      flatList.push({ type: 'message', message, id: message.id });
+      flatList.push({
+        type: 'message',
+        message: message,
+        id: message.id,
+      });
     });
   });
+
   return flatList;
 };
 
+// Message item component for virtualization
 const MessageItem = ({ index, style, data }) => {
   const { items, user } = data;
   const item = items[index];
@@ -47,7 +64,12 @@ const MessageItem = ({ index, style, data }) => {
   if (item.type === 'date') {
     return (
       <div style={style}>
-        <Typography variant="caption" align="center" sx={{ my: 2, color: 'text.secondary' }}>
+        <Typography
+          variant="caption"
+          align="center"
+          display="block"
+          sx={{ my: 2, color: 'text.secondary' }}
+        >
           {format(new Date(item.date), 'MMMM d, yyyy')}
         </Typography>
       </div>
@@ -56,7 +78,10 @@ const MessageItem = ({ index, style, data }) => {
 
   return (
     <div style={style}>
-      <MessageBubble message={item.message} isOwnMessage={item.message.sender?.id === user?.id} />
+      <MessageBubble
+        message={item.message}
+        isOwnMessage={item.message.sender?.id === user?.id}
+      />
     </div>
   );
 };
@@ -65,29 +90,94 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const listRef = useRef(null);
-  const cacheRef = useRef({}); // { conversationId: { pageNumber: [messages] } }
-  const wsRef = useRef(null); // single websocket instance
-  const reconnectTimeoutRef = useRef(null);
   const { id: conversationId } = useParams();
   const { user } = useContext(AuthContext);
   const theme = useTheme();
 
+  // Memoize the flat message list to avoid recalculation
   const flatMessageList = useMemo(() => {
     const groupedMessages = groupMessagesByDate(messages);
     return createFlatMessageList(groupedMessages);
   }, [messages]);
 
-  const listData = useMemo(
-    () => ({
-      items: flatMessageList,
-      user,
-    }),
-    [flatMessageList, user]
-  );
+  // Memoize data for virtualized list
+  const listData = useMemo(() => ({
+    items: flatMessageList,
+    user: user,
+  }), [flatMessageList, user]);
+
+  useEffect(() => {
+    if (conversationId && user?.id) {
+      fetchMessages(1, true);
+      markMessagesAsRead();
+      setupWebSocket();
+    }
+
+    return () => {
+      if (socket) {
+        socket.close();
+      }
+    };
+  }, [conversationId, user?.id]);
+
+  const setupWebSocket = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = API_BASE_URL.replace(/^https?:\/\//, '');
+    const wsUrl = `${protocol}//${host}/ws/chat/${user.id}/`;
+    const newSocket = new WebSocket(wsUrl);
+
+    newSocket.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    newSocket.onmessage = event => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'chat_message') {
+        const receivedMessage = data.message;
+
+        // Ensure the message belongs to current conversation
+        if (parseInt(receivedMessage.conversation_id) === parseInt(conversationId)) {
+          setMessages(prevMessages => {
+            // Check if message already exists to prevent duplicates
+            if (!prevMessages.some(m => m.id === receivedMessage.id)) {
+              // Add new message while maintaining chronological order
+              const updatedMessages = [
+                ...prevMessages,
+                {
+                  ...receivedMessage,
+                  sender: { id: receivedMessage.sender_id },
+                },
+              ];
+
+              // Sort messages to maintain order (just in case)
+              return updatedMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            }
+            return prevMessages;
+          });
+
+          // Scroll to bottom for new messages
+          setTimeout(() => {
+            scrollToBottom();
+          }, 100);
+        }
+      }
+    };
+
+    newSocket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    newSocket.onerror = error => {
+      console.error('WebSocket error:', error);
+    };
+
+    setSocket(newSocket);
+  };
 
   const scrollToBottom = useCallback(() => {
     if (listRef.current && flatMessageList.length > 0) {
@@ -95,221 +185,123 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     }
   }, [flatMessageList.length]);
 
-  const fetchMessages = useCallback(
-    async (pageToFetch = 1, scrollToBottomAfter = false) => {
-      if (!conversationId) return;
-
-      try {
-        // Check cache first
-        const conversationCache = cacheRef.current[conversationId] || {};
-        if (conversationCache[pageToFetch]) {
-          // Prepend cached page if not already in messages
-          setMessages(prev => {
-            // Avoid duplicates by message ID
-            const cachedMessages = conversationCache[pageToFetch];
-            const newMessages = cachedMessages.filter(m => !prev.some(pm => pm.id === m.id));
-            return [...newMessages, ...prev].sort(
-              (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-            );
-          });
-          return;
-        }
-
-        pageToFetch === 1 ? setLoading(true) : setLoadingMore(true);
-
-        const response = await axios.get(
-          `${API_URLS.messages}?conversation_id=${conversationId}&page=${pageToFetch}`
-        );
-        const data = response.data;
-
-        // Sort ascending by timestamp
-        const sortedMessages = data.results.sort(
-          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-        );
-
-        // Cache the page
-        cacheRef.current[conversationId] = {
-          ...(cacheRef.current[conversationId] || {}),
-          [pageToFetch]: sortedMessages,
-        };
-
-        setMessages(prev => {
-          if (pageToFetch === 1) return sortedMessages;
-          // Merge new page messages at the top (older messages)
-          const combined = [...sortedMessages, ...prev];
-          // Deduplicate by message id
-          const unique = [];
-          const ids = new Set();
-          combined.forEach(msg => {
-            if (!ids.has(msg.id)) {
-              ids.add(msg.id);
-              unique.push(msg);
-            }
-          });
-          return unique.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        });
-
-        setHasMore(Boolean(data.next));
-        setPage(pageToFetch);
-      } catch (err) {
-        console.error('Error fetching messages:', err);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-        if (scrollToBottomAfter) setTimeout(scrollToBottom, 100);
-      }
-    },
-    [conversationId, scrollToBottom]
-  );
-
-  const markMessagesAsRead = useCallback(async () => {
+  const fetchMessages = async (pageToFetch = 1, shouldScrollToBottom = false) => {
     try {
       if (!conversationId) return;
-      await axios.post(API_URLS.markAsRead, { conversation_id: conversationId });
+
+      if (pageToFetch === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const response = await axios.get(
+        `${API_URLS.messages}?conversation_id=${conversationId}&page=${pageToFetch}`
+      );
+
+      const data = response.data;
+      const sortedMessages = data.results.sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+      );
+
+      if (pageToFetch === 1) {
+        setMessages(sortedMessages);
+      } else {
+        setMessages(prev => [...sortedMessages, ...prev]);
+      }
+
+      setHasMore(Boolean(data.next));
+      setPage(pageToFetch);
+      setLoading(false);
+      setLoadingMore(false);
+
+      if (shouldScrollToBottom) {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const markMessagesAsRead = async () => {
+    try {
+      await axios.post(API_URLS.markAsRead, {
+        conversation_id: conversationId,
+      });
       onConversationUpdate?.();
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }
-  }, [conversationId, onConversationUpdate]);
-
-  // WebSocket setup and reuse
-  const setupWebSocket = useCallback(() => {
-    if (!user?.id) return;
-
-    if (wsRef.current) {
-      // Already connected
-      return;
-    }
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = API_BASE_URL.replace(/^https?:\/\//, '');
-    const wsUrl = `${protocol}//${host}/ws/chat/${user.id}/`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-
-    ws.onmessage = event => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chat_message') {
-        const receivedMessage = data.message;
-        // Only update if message belongs to current conversation
-        if (parseInt(receivedMessage.conversation_id) === parseInt(conversationId)) {
-          setMessages(prev => {
-            if (prev.some(m => m.id === receivedMessage.id)) return prev;
-            return [
-              ...prev,
-              {
-                ...receivedMessage,
-                sender: { id: receivedMessage.sender_id },
-              },
-            ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          });
-          setTimeout(scrollToBottom, 100);
-        }
-      }
-    };
-
-    ws.onclose = () => {
-      console.warn('WebSocket closed. Attempting to reconnect in 2s...');
-      wsRef.current = null;
-      reconnectTimeoutRef.current = setTimeout(() => {
-        setupWebSocket();
-      }, 2000);
-    };
-
-    ws.onerror = err => {
-      console.error('WebSocket error', err);
-      ws.close();
-    };
-  }, [conversationId, scrollToBottom, user?.id]);
-
-  // Cleanup websocket on unmount
-  useEffect(() => {
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Reload messages and mark read when conversation changes
-  useEffect(() => {
-    if (!conversationId || !user?.id) return;
-
-    setMessages([]);
-    setPage(1);
-    setHasMore(true);
-    setLoading(true);
-    cacheRef.current[conversationId] = cacheRef.current[conversationId] || {};
-
-    fetchMessages(1, true);
-    markMessagesAsRead();
-    setupWebSocket();
-  }, [conversationId, user?.id, fetchMessages, markMessagesAsRead, setupWebSocket]);
+  };
 
   const handleSendMessage = async e => {
     e.preventDefault();
     const messageContent = newMessage.trim();
     if (!messageContent) return;
+
+    // Clear input immediately
     setNewMessage('');
 
-    const optimisticMessage = {
-      id: `temp-${Date.now()}`,
-      content: messageContent,
-      timestamp: new Date().toISOString(),
-      sender: { id: user?.id },
-      is_read: false,
-      conversation_id: conversationId,
-    };
-    setMessages(prev => [...prev, optimisticMessage]);
-    setTimeout(scrollToBottom, 10);
-
     try {
+      // Optimistically add message to UI
+      const optimisticMessage = {
+        id: `temp-${Date.now()}`,
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+        sender: { id: user?.id },
+        is_read: false,
+      };
+
+      setMessages(prev => [...prev, optimisticMessage]);
+
+      // Scroll to bottom immediately
+      setTimeout(() => {
+        scrollToBottom();
+      }, 10);
+
+      // Send message to backend
       const [restResponse] = await Promise.all([
         axios.post(API_URLS.messages, {
           conversation_id: conversationId,
           content: messageContent,
         }),
-        wsRef.current?.readyState === WebSocket.OPEN
+        socket?.readyState === WebSocket.OPEN
           ? new Promise(resolve => {
-              const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
-              if (otherUser) {
-                wsRef.current.send(
-                  JSON.stringify({
-                    type: 'chat_message',
-                    message: messageContent,
-                    conversation_id: conversationId,
-                    recipient_id: otherUser.id,
-                  })
-                );
-              }
-              resolve();
-            })
+            const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
+            if (otherUser) {
+              socket.send(
+                JSON.stringify({
+                  type: 'chat_message',
+                  message: messageContent,
+                  conversation_id: conversationId,
+                  recipient_id: otherUser.id,
+                })
+              );
+            }
+            resolve();
+          })
           : Promise.resolve(),
       ]);
+
+      // Update conversation list
       onConversationUpdate?.();
-    } catch (err) {
-      console.error('Send failed', err);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Optionally show error toast/notification
     }
   };
 
-  const handleItemsRendered = useMemo(
-    () =>
-      debounce(({ visibleStartIndex }) => {
-        if (visibleStartIndex === 0 && hasMore && !loadingMore) {
-          fetchMessages(page + 1);
-        }
-      }, 300),
-    [hasMore, loadingMore, page, fetchMessages]
-  );
+  // Handle scroll to load more messages
+  const handleItemsRendered = useCallback(({ visibleStartIndex }) => {
+    if (visibleStartIndex === 0 && hasMore && !loadingMore) {
+      setLoadingMore(true);
+      fetchMessages(page + 1);
+    }
+  }, [hasMore, loadingMore, page]);
 
   if (!conversation) {
     return (
@@ -319,6 +311,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           justifyContent: 'center',
           alignItems: 'center',
           height: '70vh',
+          flexDirection: 'column',
         }}
       >
         <Fade in>
@@ -331,32 +324,46 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   const otherParticipant = conversation.participants?.find(p => p?.id !== user?.id) || null;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        width: '100%',
+        bgcolor: 'background.default',
+      }}
+    >
+      {/* Chat Header */}
       <Box
         sx={{
           p: 2,
           display: 'flex',
           alignItems: 'center',
           borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: 'background.paper',
         }}
       >
         {otherParticipant && (
           <>
-            <Avatar sx={{ mr: 2 }}>{otherParticipant.username?.charAt(0).toUpperCase()}</Avatar>
+            <Avatar sx={{ mr: 2 }}>
+              {otherParticipant.username?.charAt(0).toUpperCase()}
+            </Avatar>
             <Typography variant="h6">{otherParticipant.username}</Typography>
           </>
         )}
       </Box>
 
-      <Box sx={{ flexGrow: 1, overflow: 'hidden', position: 'relative' }}>
+      {/* Messages Container */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflow: 'hidden',
+          position: 'relative',
+        }}
+      >
         {loading && !messages.length ? (
           <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              height: '100%',
-              alignItems: 'center',
-            }}
+            sx={{ display: 'flex', justifyContent: 'center', height: '100%', alignItems: 'center' }}
           >
             <CircularProgress />
           </Box>
@@ -373,6 +380,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
                   display: 'flex',
                   justifyContent: 'center',
                   p: 2,
+                  bgcolor: 'background.default'
                 }}
               >
                 <CircularProgress size={24} />
@@ -385,10 +393,13 @@ function ChatWindow({ conversation, onConversationUpdate }) {
                   height={height}
                   width={width}
                   itemCount={flatMessageList.length}
-                  itemSize={100}
+                  itemSize={100} // Base size, will auto-adjust based on content
                   itemData={listData}
                   onItemsRendered={handleItemsRendered}
-                  style={{ paddingLeft: 16, paddingRight: 16 }}
+                  style={{
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                  }}
                 >
                   {MessageItem}
                 </List>
@@ -398,6 +409,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
         )}
       </Box>
 
+      {/* Message Input */}
       <Box
         component="form"
         onSubmit={handleSendMessage}
@@ -406,6 +418,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           alignItems: 'center',
           p: 2,
           borderTop: `1px solid ${theme.palette.divider}`,
+          bgcolor: 'background.paper',
         }}
       >
         <TextField
@@ -422,7 +435,12 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           }}
           multiline
           maxRows={4}
-          sx={{ mr: 1 }}
+          sx={{
+            mr: 1,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+            },
+          }}
         />
         <IconButton color="primary" type="submit" disabled={!newMessage.trim()}>
           <SendIcon />
