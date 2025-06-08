@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -11,6 +11,8 @@ import {
   Fade,
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
+import { FixedSizeList as List } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import MessageBubble from './MessageBubble';
@@ -29,6 +31,61 @@ const groupMessagesByDate = messages => {
   }, {});
 };
 
+// Create flat list of items including date separators
+const createFlatMessageList = (groupedMessages) => {
+  const flatList = [];
+
+  Object.keys(groupedMessages).forEach(date => {
+    // Add date separator
+    flatList.push({
+      type: 'date',
+      date: date,
+      id: `date-${date}`,
+    });
+
+    // Add messages for this date
+    groupedMessages[date].forEach(message => {
+      flatList.push({
+        type: 'message',
+        message: message,
+        id: message.id,
+      });
+    });
+  });
+
+  return flatList;
+};
+
+// Message item component for virtualization
+const MessageItem = ({ index, style, data }) => {
+  const { items, user } = data;
+  const item = items[index];
+
+  if (item.type === 'date') {
+    return (
+      <div style={style}>
+        <Typography
+          variant="caption"
+          align="center"
+          display="block"
+          sx={{ my: 2, color: 'text.secondary' }}
+        >
+          {format(new Date(item.date), 'MMMM d, yyyy')}
+        </Typography>
+      </div>
+    );
+  }
+
+  return (
+    <div style={style}>
+      <MessageBubble
+        message={item.message}
+        isOwnMessage={item.message.sender?.id === user?.id}
+      />
+    </div>
+  );
+};
+
 function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -37,10 +94,22 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const containerRef = useRef(null);
+  const listRef = useRef(null);
   const { id: conversationId } = useParams();
   const { user } = useContext(AuthContext);
   const theme = useTheme();
+
+  // Memoize the flat message list to avoid recalculation
+  const flatMessageList = useMemo(() => {
+    const groupedMessages = groupMessagesByDate(messages);
+    return createFlatMessageList(groupedMessages);
+  }, [messages]);
+
+  // Memoize data for virtualized list
+  const listData = useMemo(() => ({
+    items: flatMessageList,
+    user: user,
+  }), [flatMessageList, user]);
 
   useEffect(() => {
     if (conversationId && user?.id) {
@@ -93,10 +162,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
           // Scroll to bottom for new messages
           setTimeout(() => {
-            containerRef.current?.scrollTo({
-              top: containerRef.current.scrollHeight,
-              behavior: 'smooth',
-            });
+            scrollToBottom();
           }, 100);
         }
       }
@@ -113,12 +179,15 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     setSocket(newSocket);
   };
 
-  const fetchMessages = async (pageToFetch = 1, scrollToBottom = false) => {
+  const scrollToBottom = useCallback(() => {
+    if (listRef.current && flatMessageList.length > 0) {
+      listRef.current.scrollToItem(flatMessageList.length - 1, 'end');
+    }
+  }, [flatMessageList.length]);
+
+  const fetchMessages = async (pageToFetch = 1, shouldScrollToBottom = false) => {
     try {
       if (!conversationId) return;
-
-      const container = containerRef.current;
-      const previousScrollHeight = container?.scrollHeight;
 
       if (pageToFetch === 1) {
         setLoading(true);
@@ -146,14 +215,11 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       setLoading(false);
       setLoadingMore(false);
 
-      setTimeout(() => {
-        if (scrollToBottom) {
-          container?.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-        } else if (pageToFetch > 1 && container) {
-          const newScrollHeight = container.scrollHeight;
-          container.scrollTop = newScrollHeight - previousScrollHeight;
-        }
-      }, 100);
+      if (shouldScrollToBottom) {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
       setLoading(false);
@@ -171,6 +237,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       console.error('Error marking messages as read:', error);
     }
   };
+
   const handleSendMessage = async e => {
     e.preventDefault();
     const messageContent = newMessage.trim();
@@ -193,10 +260,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
       // Scroll to bottom immediately
       setTimeout(() => {
-        containerRef.current?.scrollTo({
-          top: containerRef.current.scrollHeight,
-          behavior: 'smooth',
-        });
+        scrollToBottom();
       }, 10);
 
       // Send message to backend
@@ -207,19 +271,19 @@ function ChatWindow({ conversation, onConversationUpdate }) {
         }),
         socket?.readyState === WebSocket.OPEN
           ? new Promise(resolve => {
-              const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
-              if (otherUser) {
-                socket.send(
-                  JSON.stringify({
-                    type: 'chat_message',
-                    message: messageContent,
-                    conversation_id: conversationId,
-                    recipient_id: otherUser.id,
-                  })
-                );
-              }
-              resolve();
-            })
+            const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
+            if (otherUser) {
+              socket.send(
+                JSON.stringify({
+                  type: 'chat_message',
+                  message: messageContent,
+                  conversation_id: conversationId,
+                  recipient_id: otherUser.id,
+                })
+              );
+            }
+            resolve();
+          })
           : Promise.resolve(),
       ]);
 
@@ -231,12 +295,13 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     }
   };
 
-  const handleScroll = e => {
-    if (e.currentTarget.scrollTop === 0 && hasMore && !loadingMore) {
+  // Handle scroll to load more messages
+  const handleItemsRendered = useCallback(({ visibleStartIndex }) => {
+    if (visibleStartIndex === 0 && hasMore && !loadingMore) {
       setLoadingMore(true);
       fetchMessages(page + 1);
     }
-  };
+  }, [hasMore, loadingMore, page]);
 
   if (!conversation) {
     return (
@@ -258,8 +323,6 @@ function ChatWindow({ conversation, onConversationUpdate }) {
 
   const otherParticipant = conversation.participants?.find(p => p?.id !== user?.id) || null;
 
-  const groupedMessages = groupMessagesByDate(messages);
-
   return (
     <Box
       sx={{
@@ -280,26 +343,22 @@ function ChatWindow({ conversation, onConversationUpdate }) {
           bgcolor: 'background.paper',
         }}
       >
-        {/* ...existing header content... */}
+        {otherParticipant && (
+          <>
+            <Avatar sx={{ mr: 2 }}>
+              {otherParticipant.username?.charAt(0).toUpperCase()}
+            </Avatar>
+            <Typography variant="h6">{otherParticipant.username}</Typography>
+          </>
+        )}
       </Box>
 
       {/* Messages Container */}
       <Box
-        ref={containerRef}
         sx={{
           flexGrow: 1,
-          overflow: 'auto',
-          p: 2,
-          '&::-webkit-scrollbar': {
-            width: '4px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: theme.palette.divider,
-            borderRadius: '4px',
-          },
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
         {loading && !messages.length ? (
@@ -311,24 +370,41 @@ function ChatWindow({ conversation, onConversationUpdate }) {
         ) : (
           <>
             {loadingMore && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  p: 2,
+                  bgcolor: 'background.default'
+                }}
+              >
                 <CircularProgress size={24} />
               </Box>
             )}
-            {Object.keys(groupedMessages).map(date => (
-              <Box key={date}>
-                <Typography variant="caption" align="center" display="block" sx={{ my: 2 }}>
-                  {format(new Date(date), 'MMMM d, yyyy')}
-                </Typography>
-                {groupedMessages[date].map(message => (
-                  <MessageBubble
-                    key={message.id}
-                    message={message}
-                    isOwnMessage={message.sender?.id === user?.id}
-                  />
-                ))}
-              </Box>
-            ))}
+            <AutoSizer>
+              {({ height, width }) => (
+                <List
+                  ref={listRef}
+                  height={height}
+                  width={width}
+                  itemCount={flatMessageList.length}
+                  itemSize={100} // Base size, will auto-adjust based on content
+                  itemData={listData}
+                  onItemsRendered={handleItemsRendered}
+                  style={{
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                  }}
+                >
+                  {MessageItem}
+                </List>
+              )}
+            </AutoSizer>
           </>
         )}
       </Box>
