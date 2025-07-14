@@ -126,6 +126,7 @@ function ChatLayout() {
         flexDirection: 'column',
         bgcolor: 'background.default',
         borderRight: `1px solid ${theme.palette.divider}`,
+        boxShadow: { xs: 3, sm: 'none' },
       }}
     >
       {/* ChatterBox Header */}
@@ -136,12 +137,13 @@ function ChatLayout() {
           flexDirection: 'column',
           alignItems: 'center',
           borderBottom: `1px solid ${theme.palette.divider}`,
+          background: theme.palette.background.paper,
         }}
       >
         <ChatIcon
           sx={{
-            fontSize: 40,
-            mr: 1,
+            fontSize: 44,
+            mb: 1,
             color: theme.palette.primary.main,
           }}
         />
@@ -151,6 +153,7 @@ function ChatLayout() {
             fontWeight: 'bold',
             color: theme.palette.primary.main,
             mb: 2,
+            letterSpacing: 1,
           }}
         >
           ChatterBox
@@ -163,11 +166,14 @@ function ChatLayout() {
           to="/chat/users"
           sx={{
             py: 1,
-            borderRadius: 1,
+            borderRadius: 2,
+            fontWeight: 500,
             justifyContent: 'flex-start',
+            background: theme.palette.background.default,
             '&:hover': {
-              transform: 'translateY(-1px)',
-              boxShadow: 1,
+              transform: 'translateY(-2px)',
+              boxShadow: 2,
+              background: theme.palette.action.hover,
             },
           }}
         >
@@ -181,10 +187,7 @@ function ChatLayout() {
           flexGrow: 1,
           overflow: 'auto',
           '&::-webkit-scrollbar': {
-            width: '4px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
+            width: '6px',
           },
           '&::-webkit-scrollbar-thumb': {
             background: theme.palette.divider,

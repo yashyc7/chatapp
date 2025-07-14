@@ -23,7 +23,7 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
   const theme = useTheme();
 
   const getOtherParticipant = conversation => {
-    if (!conversation || !conversation.participants || !user) {
+    if (!conversation || !conversation.participants) {
       return {};
     }
     return conversation.participants.find(p => p && p.id !== user.id) || {};
@@ -35,66 +35,52 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
   };
 
   return (
-    <List
-      sx={{
-        width: '100%',
-        bgcolor: 'background.paper',
-        p: 0,
-        '& .MuiListItem-root': {
-          px: 2, // Add consistent padding
-          py: 1,
-        },
-      }}
-    >
-      <Divider />
+    <List sx={{ p: 0, width: '100%' }}>
+      {loading
+        ? Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              height={64}
+              sx={{ my: 1, mx: 2, borderRadius: 2 }}
+            />
+          ))
+        : conversations.map(conversation => {
+            if (!conversation) return null;
 
-      {loading ? (
-        // Loading skeletons
-        [...Array(5)].map((_, index) => (
-          <React.Fragment key={index}>
-            <ListItem sx={{ py: 1.5 }}>
-              <ListItemAvatar>
-                <Skeleton variant="circular" width={40} height={40} />
-              </ListItemAvatar>
-              <ListItemText
-                primary={<Skeleton width="70%" />}
-                secondary={<Skeleton width="40%" />}
-              />
-            </ListItem>
-            <Divider variant="inset" component="li" />
-          </React.Fragment>
-        ))
-      ) : conversations && conversations.length > 0 ? (
-        conversations.map(conversation => {
-          if (!conversation) return null;
+            const otherUser = getOtherParticipant(conversation);
+            const lastMessage = conversation.last_message;
+            const hasUnread = conversation.unread_count > 0;
+            const isSelected = selectedConversation && selectedConversation.id === conversation.id;
+            const lastMessageText = lastMessage
+              ? lastMessage.sender && lastMessage.sender.id === user?.id
+                ? 'You: ' + lastMessage.content
+                : lastMessage.content
+              : 'No messages yet';
+            const lastMessageTime = lastMessage ? formatTime(lastMessage.timestamp) : '';
 
-          const otherUser = getOtherParticipant(conversation);
-          const lastMessage = conversation.last_message;
-          const hasUnread = conversation.unread_count > 0;
-          const isSelected = selectedConversation && selectedConversation.id === conversation.id;
-
-          return (
-            <React.Fragment key={conversation.id}>
+            return (
               <ListItem
-                alignItems="flex-start"
-                component="div"
-                selected={isSelected}
+                key={conversation.id}
                 onClick={() => onSelect(conversation)}
+                selected={isSelected}
                 sx={{
-                  backgroundColor: isSelected ? theme.palette.action.selected : 'inherit',
+                  borderRadius: 2,
+                  mb: 1,
+                  mx: 1,
+                  boxShadow: isSelected ? 4 : 0,
+                  background: isSelected
+                    ? `linear-gradient(90deg, ${theme.palette.primary.light}11 0%, ${theme.palette.secondary.light}22 100%)`
+                    : theme.palette.background.paper,
+                  border: isSelected
+                    ? `2px solid ${theme.palette.primary.main}33`
+                    : `1px solid ${theme.palette.divider}`,
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
                   '&:hover': {
                     backgroundColor: theme.palette.action.hover,
+                    boxShadow: 2,
                   },
-                  cursor: 'pointer',
-                  my: 0.5,
-                  mx: 1,
-                  transition: 'all 0.2s ease-in-out',
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${
-                    theme.palette.mode === 'light'
-                      ? 'rgba(255, 255, 255, 0.1)'
-                      : 'rgba(30, 32, 38, 0.2)'
-                  }`,
                 }}
               >
                 <ListItemAvatar>
@@ -108,62 +94,32 @@ function ConversationList({ conversations, onSelect, selectedConversation, loadi
                       component="span"
                       variant="body1"
                       fontWeight={hasUnread ? 'bold' : 'normal'}
-                      color="text.primary"
+                      color={isSelected ? 'primary.main' : 'text.primary'}
                     >
-                      {otherUser.username || 'Unknown User'}
+                      {otherUser?.username}
                     </Typography>
                   }
                   secondary={
-                    <>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: 'inline',
-                          fontWeight: hasUnread ? 'bold' : 'normal',
-                          maxWidth: '70%',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {lastMessage
-                          ? lastMessage.sender && lastMessage.sender.id === user?.id
-                            ? 'You: '
-                            : ''
-                          : ''}
-                        {lastMessage ? lastMessage.content : 'No messages yet'}
-                      </Typography>
-                      {lastMessage && (
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{
-                            display: 'block',
-                            textAlign: 'right',
-                            mt: 0.5,
-                          }}
-                        >
-                          {formatTime(lastMessage.timestamp)}
-                        </Typography>
-                      )}
-                    </>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      noWrap
+                      sx={{ maxWidth: 180 }}
+                    >
+                      {lastMessageText}
+                    </Typography>
                   }
                 />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ minWidth: 60, textAlign: 'right' }}
+                >
+                  {lastMessageTime}
+                </Typography>
               </ListItem>
-              <Divider variant="inset" component="li" />
-            </React.Fragment>
-          );
-        })
-      ) : (
-        <ListItem>
-          <ListItemText
-            primary={<Typography color="text.secondary">No conversations yet</Typography>}
-          />
-        </ListItem>
-      )}
+            );
+          })}
     </List>
   );
 }
