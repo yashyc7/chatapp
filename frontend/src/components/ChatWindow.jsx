@@ -32,7 +32,7 @@ const groupMessagesByDate = messages => {
 };
 
 // Create flat list of items including date separators
-const createFlatMessageList = (groupedMessages) => {
+const createFlatMessageList = groupedMessages => {
   const flatList = [];
 
   Object.keys(groupedMessages).forEach(date => {
@@ -78,10 +78,7 @@ const MessageItem = ({ index, style, data }) => {
 
   return (
     <div style={style}>
-      <MessageBubble
-        message={item.message}
-        isOwnMessage={item.message.sender?.id === user?.id}
-      />
+      <MessageBubble message={item.message} isOwnMessage={item.message.sender?.id === user?.id} />
     </div>
   );
 };
@@ -106,10 +103,13 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   }, [messages]);
 
   // Memoize data for virtualized list
-  const listData = useMemo(() => ({
-    items: flatMessageList,
-    user: user,
-  }), [flatMessageList, user]);
+  const listData = useMemo(
+    () => ({
+      items: flatMessageList,
+      user: user,
+    }),
+    [flatMessageList, user]
+  );
 
   useEffect(() => {
     if (conversationId && user?.id) {
@@ -271,19 +271,19 @@ function ChatWindow({ conversation, onConversationUpdate }) {
         }),
         socket?.readyState === WebSocket.OPEN
           ? new Promise(resolve => {
-            const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
-            if (otherUser) {
-              socket.send(
-                JSON.stringify({
-                  type: 'chat_message',
-                  message: messageContent,
-                  conversation_id: conversationId,
-                  recipient_id: otherUser.id,
-                })
-              );
-            }
-            resolve();
-          })
+              const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
+              if (otherUser) {
+                socket.send(
+                  JSON.stringify({
+                    type: 'chat_message',
+                    message: messageContent,
+                    conversation_id: conversationId,
+                    recipient_id: otherUser.id,
+                  })
+                );
+              }
+              resolve();
+            })
           : Promise.resolve(),
       ]);
 
@@ -296,12 +296,15 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   };
 
   // Handle scroll to load more messages
-  const handleItemsRendered = useCallback(({ visibleStartIndex }) => {
-    if (visibleStartIndex === 0 && hasMore && !loadingMore) {
-      setLoadingMore(true);
-      fetchMessages(page + 1);
-    }
-  }, [hasMore, loadingMore, page]);
+  const handleItemsRendered = useCallback(
+    ({ visibleStartIndex }) => {
+      if (visibleStartIndex === 0 && hasMore && !loadingMore) {
+        setLoadingMore(true);
+        fetchMessages(page + 1);
+      }
+    },
+    [hasMore, loadingMore, page]
+  );
 
   if (!conversation) {
     return (
@@ -345,9 +348,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       >
         {otherParticipant && (
           <>
-            <Avatar sx={{ mr: 2 }}>
-              {otherParticipant.username?.charAt(0).toUpperCase()}
-            </Avatar>
+            <Avatar sx={{ mr: 2 }}>{otherParticipant.username?.charAt(0).toUpperCase()}</Avatar>
             <Typography variant="h6">{otherParticipant.username}</Typography>
           </>
         )}
@@ -380,7 +381,7 @@ function ChatWindow({ conversation, onConversationUpdate }) {
                   display: 'flex',
                   justifyContent: 'center',
                   p: 2,
-                  bgcolor: 'background.default'
+                  bgcolor: 'background.default',
                 }}
               >
                 <CircularProgress size={24} />

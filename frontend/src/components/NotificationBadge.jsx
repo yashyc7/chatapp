@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import {
   Badge,
@@ -15,14 +15,17 @@ import { API_URLS } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import UserAvatar from './UserAvatar';
+import { AuthContext } from '../context/AuthContext';
 
 function NotificationBadge({ onSelectConversation }) {
   const [unreadMessages, setUnreadMessages] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
+  const { loading } = useContext(AuthContext);
 
   useEffect(() => {
+    if (loading) return;
     const fetchUnreadMessages = async () => {
       try {
         const response = await axios.get(API_URLS.unreadMessages);
@@ -54,7 +57,7 @@ function NotificationBadge({ onSelectConversation }) {
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [loading]);
 
   const handleOpenMenu = event => {
     setAnchorEl(event.currentTarget);
