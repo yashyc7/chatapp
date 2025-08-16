@@ -30,7 +30,7 @@ import axios from 'axios';
 import { API_URLS } from '../config';
 import UserAvatar from './UserAvatar';
 import AddIcon from '@mui/icons-material/Add';
-import ChatIcon from '@mui/icons-material/Chat';
+import { MarkChatRead } from '@mui/icons-material';
 
 const drawerWidth = 300;
 
@@ -140,7 +140,7 @@ function ChatLayout() {
           background: theme.palette.background.paper,
         }}
       >
-        <ChatIcon
+        <MarkChatRead
           sx={{
             fontSize: 44,
             mb: 1,
