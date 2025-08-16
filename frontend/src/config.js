@@ -1,6 +1,6 @@
 const API_BASE_URL =
   process.env.NODE_ENV === 'production'
-    ? 'https://chatapp-6k1l.onrender.com' // Your production API URL
+    ? 'https://chatterbox-mwcb.onrender.com' // Your production API URL
     : 'http://localhost:8000';
 
 export const API_URLS = {
