@@ -52,7 +52,7 @@ function NotificationBadge({ onSelectConversation }) {
     };
 
     fetchUnreadMessages();
-    const intervalId = setInterval(fetchUnreadMessages, 10000);
+    const intervalId = setInterval(fetchUnreadMessages, 30000);
 
     return () => {
       clearInterval(intervalId);
