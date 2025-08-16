@@ -3,12 +3,14 @@ import axios from 'axios';
 import { API_URLS } from '../config';
 import { auth, googleProvider } from '../../firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate=useNavigate();
 
   useEffect(() => {
     initializeUser();
@@ -19,9 +21,11 @@ export const AuthProvider = ({ children }) => {
     const userData = localStorage.getItem('user');
 
     if (token && userData) {
+      console.log(userData)
       setUser(JSON.parse(userData));
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
-      console.log('Token set in axios defaults:', token);
+      navigate('/chat/')
+      console.log('Token is found', token);
     } else {
       clearAxiosAuthHeader();
       console.log('No token found, Authorization header cleared');
