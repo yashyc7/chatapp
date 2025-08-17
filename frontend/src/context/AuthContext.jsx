@@ -10,7 +10,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     initializeUser();
@@ -21,10 +21,10 @@ export const AuthProvider = ({ children }) => {
     const userData = localStorage.getItem('user');
 
     if (token && userData) {
-      console.log(userData)
+      console.log(userData);
       setUser(JSON.parse(userData));
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
-      navigate('/chat/')
+      navigate('/chat/');
       console.log('Token is found', token);
     } else {
       clearAxiosAuthHeader();

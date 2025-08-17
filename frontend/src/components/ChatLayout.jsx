@@ -12,6 +12,7 @@ import {
   Fade,
   Button,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -33,7 +34,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { MarkChatRead } from '@mui/icons-material';
 import ConnectionStatus from './ConnectionStatus';
 
-const drawerWidth = 300;
+const drawerWidth = { xs: '100%', sm: 300, md: 320 };
 
 function ChatLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -206,177 +207,264 @@ function ChatLayout() {
     </Box>
   );
 
+  // Mobile-first responsive design
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Auto-close mobile drawer when conversation is selected
+  useEffect(() => {
+    if (isMobile && selectedConversation) {
+      setMobileDrawerOpen(false);
+    }
+  }, [selectedConversation, isMobile]);
+
   return (
     <Box
       sx={{
         display: 'flex',
+        height: '100vh',
+        overflow: 'hidden',
         background:
           theme.palette.mode === 'dark'
             ? 'linear-gradient(135deg, #181a20 0%, #23272f 100%)'
             : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        minHeight: '100vh',
-        width: '100%',
       }}
     >
-      <AppBar
-        position="fixed"
+      {/* Sidebar */}
+      <Box
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          background: theme.palette.background.paper,
-          backdropFilter: 'blur(10px)',
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          boxShadow: 'none',
+          width: { xs: '100%', sm: 300, md: 320 },
+          borderRight: `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'background.paper',
+          overflow: 'hidden', // Prevent horizontal scroll
         }}
       >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
+        {/* ChatterBox Header */}
+        <Box
+          sx={{
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            background: theme.palette.background.paper,
+          }}
+        >
+          <MarkChatRead
+            sx={{
+              fontSize: 44,
+              mb: 1,
+              color: theme.palette.primary.main,
+            }}
+          />
           <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: theme.palette.primary.main,
+              mb: 2,
+              letterSpacing: 1,
+            }}
           >
-            {selectedConversation && selectedConversation.participants && user
-              ? (() => {
-                  const otherUser = selectedConversation.participants.find(
-                    p => p && p.id !== user.id
-                  );
-                  return otherUser?.username ? (
-                    <>
-                      <UserAvatar user={otherUser} />
-                      <span style={{ marginLeft: 8 }}>{otherUser.username}</span>
-                    </>
-                  ) : (
-                    'Chat'
-                  );
-                })()
-              : 'Select a conversation'}
+            ChatterBox
           </Typography>
-          <NotificationBadge onSelectConversation={handleNotificationSelect} />
-          <ConnectionStatus />
-          <IconButton
-            color="inherit"
-            onClick={toggleTheme}
-            sx={{ ml: 1 }}
-            aria-label="toggle theme"
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<AddIcon />}
+            component={Link}
+            to="/chat/users"
+            sx={{
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 500,
+              justifyContent: 'flex-start',
+              background: theme.palette.background.default,
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: 2,
+                background: theme.palette.action.hover,
+              },
+            }}
           >
-            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body1" sx={{ mr: 2 }}>
-              {user?.username}
-            </Typography>
-            <UserAvatar user={user} sx={{ mr: 2 }} />
-            <IconButton
-              color="primary"
-              onClick={handleLogout}
-              sx={{
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  color: theme.palette.error.main,
-                  transform: 'rotate(90deg)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Box>
-        </Toolbar>
-      </AppBar>
-      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
+            New Conversation
+          </Button>
+        </Box>
+
+        {/* Conversation List */}
+        <Box
           sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-              borderRadius: '0 16px 16px 0',
-              background: theme.palette.background.paper,
+            flexGrow: 1,
+            overflow: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: theme.palette.divider,
+              borderRadius: '4px',
             },
           }}
         >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-              borderRadius: '0 16px 16px 0',
-              border: 'none',
-              background: theme.palette.background.paper,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
+          <ConversationList
+            conversations={conversations}
+            onSelect={handleConversationSelect}
+            selectedConversation={selectedConversation}
+            loading={loading}
+          />
+        </Box>
       </Box>
+
+      {/* Main content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 0,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          transition: 'all 0.3s ease-in-out',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
-        <Fade in={true} timeout={800}>
-          <Box>
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      height: '70vh',
-                      flexDirection: 'column',
-                      gap: 2,
-                    }}
-                  >
-                    <MarkChatReadIcon sx={{ fontSize: 80, color: 'primary.main', opacity: 0.7 }} />
-                    <Typography variant="h5" color="textSecondary">
-                      Select a conversation or start a new one
-                    </Typography>
-                  </Box>
-                }
-              />
-              <Route
-                path="/users"
-                element={<UserList onStartConversation={handleStartNewConversation} />}
-              />
-              <Route
-                path="/conversation/:id"
-                element={
-                  <ChatWindow
-                    conversation={selectedConversation}
-                    onConversationUpdate={fetchConversations}
-                  />
-                }
-              />
-            </Routes>
-          </Box>
-        </Fade>
+        {/* Mobile header */}
+        {isMobile && (
+          <AppBar position="static" sx={{ display: { sm: 'none' } }}>
+            <Toolbar>
+              <IconButton edge="start" onClick={() => setMobileDrawerOpen(true)} sx={{ mr: 2 }}>
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" noWrap>
+                {selectedConversation?.participants?.[0]?.username || 'Chats'}
+              </Typography>
+            </Toolbar>
+          </AppBar>
+        )}
+
+        <AppBar
+          position="fixed"
+          sx={{
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            ml: { sm: `${drawerWidth}px` },
+            background: theme.palette.background.paper,
+            backdropFilter: 'blur(10px)',
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            boxShadow: 'none',
+          }}
+        >
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: 'none' } }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}
+            >
+              {selectedConversation && selectedConversation.participants && user
+                ? (() => {
+                    const otherUser = selectedConversation.participants.find(
+                      p => p && p.id !== user.id
+                    );
+                    return otherUser?.username ? (
+                      <>
+                        <UserAvatar user={otherUser} />
+                        <span style={{ marginLeft: 8 }}>{otherUser.username}</span>
+                      </>
+                    ) : (
+                      'Chat'
+                    );
+                  })()
+                : 'Select a conversation'}
+            </Typography>
+            <NotificationBadge onSelectConversation={handleNotificationSelect} />
+            <ConnectionStatus />
+            <IconButton
+              color="inherit"
+              onClick={toggleTheme}
+              sx={{ ml: 1 }}
+              aria-label="toggle theme"
+            >
+              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="body1" sx={{ mr: 2 }}>
+                {user?.username}
+              </Typography>
+              <UserAvatar user={user} sx={{ mr: 2 }} />
+              <IconButton
+                color="primary"
+                onClick={handleLogout}
+                sx={{
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: theme.palette.error.main,
+                    transform: 'rotate(90deg)',
+                  },
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Box>
+          </Toolbar>
+        </AppBar>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 0,
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            transition: 'all 0.3s ease-in-out',
+          }}
+        >
+          <Fade in={true} timeout={800}>
+            <Box>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '70vh',
+                        flexDirection: 'column',
+                        gap: 2,
+                      }}
+                    >
+                      <MarkChatReadIcon
+                        sx={{ fontSize: 80, color: 'primary.main', opacity: 0.7 }}
+                      />
+                      <Typography variant="h5" color="textSecondary">
+                        Select a conversation or start a new one
+                      </Typography>
+                    </Box>
+                  }
+                />
+                <Route
+                  path="/users"
+                  element={<UserList onStartConversation={handleStartNewConversation} />}
+                />
+                <Route
+                  path="/conversation/:id"
+                  element={
+                    <ChatWindow
+                      conversation={selectedConversation}
+                      onConversationUpdate={fetchConversations}
+                    />
+                  }
+                />
+              </Routes>
+            </Box>
+          </Fade>
+        </Box>
       </Box>
     </Box>
   );

@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import UserAvatar from './UserAvatar';
 import { AuthContext } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 
 function NotificationBadge({ onSelectConversation }) {
   const [unreadMessages, setUnreadMessages] = useState([]);
@@ -23,6 +24,16 @@ function NotificationBadge({ onSelectConversation }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const { loading } = useContext(AuthContext);
+  const {
+    notifications,
+    unreadCount,
+    isNotificationSupported,
+    permission,
+    requestPermission,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+  } = useNotifications();
 
   useEffect(() => {
     if (loading) return;
@@ -87,6 +98,50 @@ function NotificationBadge({ onSelectConversation }) {
       console.error('Error marking messages as read:', error);
     }
   };
+
+  const handleNotificationClick = notification => {
+    markAsRead(notification.id);
+    handleCloseMenu();
+
+    if (notification.conversationId) {
+      navigate(`/chat/conversation/${notification.conversationId}`);
+    }
+  };
+
+  const handleMarkAllRead = () => {
+    markAllAsRead();
+    handleCloseMenu();
+  };
+
+  const handleClearAll = () => {
+    clearAllNotifications();
+    handleCloseMenu();
+  };
+
+  const handleEnableNotifications = async () => {
+    const success = await requestPermission();
+    if (success) {
+      handleCloseMenu();
+    }
+  };
+
+  // Auto-close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = event => {
+      if (anchorEl && anchorEl.contains(event.target)) {
+        return; // Clicked inside the menu
+      }
+      handleCloseMenu();
+    };
+
+    if (anchorEl) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [anchorEl]);
 
   return (
     <>

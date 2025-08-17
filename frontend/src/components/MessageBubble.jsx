@@ -1,14 +1,12 @@
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
+import { Check as CheckIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 
-function MessageBubble({ message, isOwnMessage }) {
+const MessageBubble = ({ message, isOwnMessage }) => {
   const theme = useTheme();
-
-  const formatTime = timestamp => {
-    return format(new Date(timestamp), 'h:mm a');
-  };
+  const messageTime = format(new Date(message.timestamp), 'h:mm a');
 
   return (
     <Box
@@ -16,76 +14,57 @@ function MessageBubble({ message, isOwnMessage }) {
         display: 'flex',
         justifyContent: isOwnMessage ? 'flex-end' : 'flex-start',
         mb: 2,
-        opacity: 1,
-        transform: 'translateX(0)',
-        transition: 'opacity 0.3s ease, transform 0.3s ease',
-        '&.message-enter': {
-          opacity: 0,
-          transform: isOwnMessage ? 'translateX(20px)' : 'translateX(-20px)',
-        },
+        px: 2,
       }}
-      className="message-bubble"
     >
-      <Paper
-        elevation={1}
+      <Box
         sx={{
-          p: 2,
           maxWidth: '70%',
-          backgroundColor: isOwnMessage
-            ? theme.palette.mode === 'light'
-              ? 'rgba(3, 169, 244, 0.15)'
-              : 'rgba(144, 202, 249, 0.15)'
-            : theme.palette.mode === 'light'
-              ? 'rgba(255, 255, 255, 0.9)'
-              : 'rgba(30, 32, 38, 0.9)',
-          borderRadius: isOwnMessage ? '20px 20px 5px 20px' : '20px 20px 20px 5px',
-          boxShadow: isOwnMessage
-            ? `0 2px 10px ${theme.palette.primary.main}33`
-            : theme.palette.mode === 'light'
-              ? '0 2px 10px rgba(0, 0, 0, 0.05)'
-              : '0 2px 10px rgba(0, 0, 0, 0.2)',
-          border: isOwnMessage
-            ? `1px solid ${theme.palette.primary.main}33`
-            : `1px solid ${
-                theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)'
-              }`,
+          backgroundColor: isOwnMessage ? 'primary.main' : 'background.paper',
+          color: isOwnMessage ? 'white' : 'text.primary',
+          borderRadius: 3,
+          px: 2,
+          py: 1.5,
+          position: 'relative',
+          border: isOwnMessage ? 'none' : `1px solid ${theme.palette.divider}`,
+          boxShadow: isOwnMessage ? 2 : 1,
         }}
       >
-        <Typography
-          variant="body1"
-          sx={{
-            wordBreak: 'break-word',
-            color: isOwnMessage ? theme.palette.primary.main : theme.palette.text.primary,
-          }}
-        >
+        <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>
           {message.content}
         </Typography>
-        <Typography
-          variant="caption"
+
+        <Box
           sx={{
-            display: 'block',
-            textAlign: 'right',
-            mt: 0.5,
-            fontSize: '0.7rem',
-            opacity: 0.8,
-            color: theme.palette.text.secondary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mt: 1,
+            gap: 1,
           }}
         >
-          {formatTime(message.timestamp)}
+          <Typography
+            variant="caption"
+            sx={{
+              color: isOwnMessage ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+              fontSize: '0.75rem',
+            }}
+          >
+            {messageTime}
+          </Typography>
+
           {isOwnMessage && (
-            <span
-              style={{
-                marginLeft: '4px',
-                color: message.is_read ? theme.palette.primary.main : theme.palette.text.secondary,
+            <CheckIcon
+              sx={{
+                fontSize: '0.875rem',
+                color: 'rgba(255,255,255,0.7)',
               }}
-            >
-              {message.is_read ? '✓✓' : '✓'}
-            </span>
+            />
           )}
-        </Typography>
-      </Paper>
+        </Box>
+      </Box>
     </Box>
   );
-}
+};
 
 export default MessageBubble;

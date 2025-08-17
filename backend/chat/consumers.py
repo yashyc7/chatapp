@@ -35,7 +35,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 sender_id=self.user_id, conversation_id=conversation_id, content=message
             )
 
-            # Send message to recipient's personal room
+            # Send message ONLY to recipient (not back to sender)
             recipient_room = f"user_{recipient_id}"
             await self.channel_layer.group_send(
                 recipient_room,
@@ -51,23 +51,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     },
                 },
             )
-
-            # # Send confirmation back to sender
-            # await self.channel_layer.group_send(
-            #     self.user_room_name,
-            #     {
-            #         "type": "chat_message",
-            #         "message": {
-            #             "id": saved_message.id,
-            #             "sender_id": int(self.user_id),
-            #             "conversation_id": conversation_id,
-            #             "content": message,
-            #             "timestamp": saved_message.timestamp.isoformat(),
-            #             "is_read": False,
-            #         },
-            #     },
-            # )
-            # we don't need to send again to the sender to prevent duplication issues
+            
+            # Don't send confirmation back to sender - they already have the message
 
     async def chat_message(self, event):
         message = event["message"]
