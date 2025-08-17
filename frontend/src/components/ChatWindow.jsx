@@ -19,6 +19,7 @@ import MessageBubble from './MessageBubble';
 import API_BASE_URL, { API_URLS } from '../config';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
+import { useWebSocket } from '../context/WebSocketContext';
 
 const groupMessagesByDate = messages => {
   return messages.reduce((groups, message) => {
@@ -87,13 +88,13 @@ function ChatWindow({ conversation, onConversationUpdate }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const listRef = useRef(null);
   const { id: conversationId } = useParams();
   const { user } = useContext(AuthContext);
+  const { isConnected, sendMessage, registerMessageHandler } = useWebSocket();
   const theme = useTheme();
 
   // Memoize the flat message list to avoid recalculation
@@ -111,73 +112,44 @@ function ChatWindow({ conversation, onConversationUpdate }) {
     [flatMessageList, user]
   );
 
+  // Register message handler for this conversation
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const cleanup = registerMessageHandler(conversationId, (message) => {
+      setMessages(prevMessages => {
+        // Check if message already exists to prevent duplicates
+        if (!prevMessages.some(m => m.id === message.id)) {
+          // Add new message while maintaining chronological order
+          const updatedMessages = [
+            ...prevMessages,
+            {
+              ...message,
+              sender: { id: message.sender_id },
+            },
+          ];
+
+          // Sort messages to maintain order
+          return updatedMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        }
+        return prevMessages;
+      });
+
+      // Scroll to bottom for new messages
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    });
+
+    return cleanup;
+  }, [conversationId, registerMessageHandler]);
+
   useEffect(() => {
     if (conversationId && user?.id) {
       fetchMessages(1, true);
       markMessagesAsRead();
-      setupWebSocket();
     }
-
-    return () => {
-      if (socket) {
-        socket.close();
-      }
-    };
   }, [conversationId, user?.id]);
-
-  const setupWebSocket = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = API_BASE_URL.replace(/^https?:\/\//, '');
-    const wsUrl = `${protocol}//${host}/ws/chat/${user.id}/`;
-    const newSocket = new WebSocket(wsUrl);
-
-    newSocket.onopen = () => {
-      console.log('WebSocket connection established');
-    };
-
-    newSocket.onmessage = event => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chat_message') {
-        const receivedMessage = data.message;
-
-        // Ensure the message belongs to current conversation
-        if (parseInt(receivedMessage.conversation_id) === parseInt(conversationId)) {
-          setMessages(prevMessages => {
-            // Check if message already exists to prevent duplicates
-            if (!prevMessages.some(m => m.id === receivedMessage.id)) {
-              // Add new message while maintaining chronological order
-              const updatedMessages = [
-                ...prevMessages,
-                {
-                  ...receivedMessage,
-                  sender: { id: receivedMessage.sender_id },
-                },
-              ];
-
-              // Sort messages to maintain order (just in case)
-              return updatedMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            }
-            return prevMessages;
-          });
-
-          // Scroll to bottom for new messages
-          setTimeout(() => {
-            scrollToBottom();
-          }, 100);
-        }
-      }
-    };
-
-    newSocket.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-
-    newSocket.onerror = error => {
-      console.error('WebSocket error:', error);
-    };
-
-    setSocket(newSocket);
-  };
 
   const scrollToBottom = useCallback(() => {
     if (listRef.current && flatMessageList.length > 0) {
@@ -264,28 +236,23 @@ function ChatWindow({ conversation, onConversationUpdate }) {
       }, 10);
 
       // Send message to backend
-      const [restResponse] = await Promise.all([
-        axios.post(API_URLS.messages, {
-          conversation_id: conversationId,
-          content: messageContent,
-        }),
-        socket?.readyState === WebSocket.OPEN
-          ? new Promise(resolve => {
-              const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
-              if (otherUser) {
-                socket.send(
-                  JSON.stringify({
-                    type: 'chat_message',
-                    message: messageContent,
-                    conversation_id: conversationId,
-                    recipient_id: otherUser.id,
-                  })
-                );
-              }
-              resolve();
-            })
-          : Promise.resolve(),
-      ]);
+      const response = await axios.post(API_URLS.messages, {
+        conversation_id: conversationId,
+        content: messageContent,
+      });
+
+      // Send message via WebSocket if connected
+      if (isConnected) {
+        const otherUser = conversation.participants?.find(p => p?.id !== user?.id);
+        if (otherUser) {
+          sendMessage({
+            type: 'chat_message',
+            message: messageContent,
+            conversation_id: conversationId,
+            recipient_id: otherUser.id,
+          });
+        }
+      }
 
       // Update conversation list
       onConversationUpdate?.();

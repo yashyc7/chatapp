@@ -4,12 +4,14 @@
   import Register from './components/Register';
   import ChatLayout from './components/ChatLayout';
   import { AuthProvider } from './context/AuthContext';
+  import { WebSocketProvider } from './context/WebSocketContext';
 
   function App() {
     return (
       
         <Router>
         <AuthProvider>
+          <WebSocketProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -23,7 +25,8 @@
             />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
-      </AuthProvider>
+          </WebSocketProvider>
+        </AuthProvider>
         </Router>
      
     );

@@ -31,6 +31,7 @@ import { API_URLS } from '../config';
 import UserAvatar from './UserAvatar';
 import AddIcon from '@mui/icons-material/Add';
 import { MarkChatRead } from '@mui/icons-material';
+import ConnectionStatus from './ConnectionStatus';
 
 const drawerWidth = 300;
 
@@ -261,6 +262,7 @@ function ChatLayout() {
               : 'Select a conversation'}
           </Typography>
           <NotificationBadge onSelectConversation={handleNotificationSelect} />
+          <ConnectionStatus />
           <IconButton
             color="inherit"
             onClick={toggleTheme}
